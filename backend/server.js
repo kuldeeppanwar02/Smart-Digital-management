@@ -6,7 +6,14 @@ const cors = require('cors');
 const app = express();
 
 // Middleware
-app.use(cors());
+// Allow requests from the live Vercel frontend and local development
+app.use(cors({
+  origin: [
+    'https://smart-digital-management.vercel.app',
+    'http://localhost:5173'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
