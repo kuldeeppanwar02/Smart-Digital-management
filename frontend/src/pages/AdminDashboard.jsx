@@ -112,7 +112,11 @@ const AdminDashboard = () => {
         optionalSubjects: u.optionalSubjects ? (Array.isArray(u.optionalSubjects) ? u.optionalSubjects.join(', ') : u.optionalSubjects) : '',
         subjects: Array.isArray(u.subjects) ? u.subjects : (u.subjects ? String(u.subjects).split(',').map(s=>s.trim()).filter(Boolean) : []), 
         teachingClasses: Array.isArray(u.teachingClasses) ? u.teachingClasses : (u.teachingClasses ? String(u.teachingClasses).split(',').map(s=>s.trim()).filter(Boolean) : []),
-        teachingSections: Array.isArray(u.teachingSections) ? u.teachingSections : (u.teachingSections ? String(u.teachingSections).split(',').map(s=>s.trim()).filter(Boolean) : [])
+        teachingSections: (Array.isArray(u.teachingSections) ? u.teachingSections : (u.teachingSections ? String(u.teachingSections).split(',').map(s=>s.trim()).filter(Boolean) : [])).map(sec => {
+          const classes = Array.isArray(u.teachingClasses) ? u.teachingClasses : (u.teachingClasses ? String(u.teachingClasses).split(',').map(s=>s.trim()).filter(Boolean) : []);
+          if (!sec.includes('-') && classes.length > 0) return `${classes[0]}-${sec}`;
+          return sec;
+        })
       }
     });
   };
@@ -257,11 +261,12 @@ const AdminDashboard = () => {
                                   <label key={sec} className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-md cursor-pointer text-xs font-semibold text-gray-600 hover:bg-indigo-50 transition-colors">
                                     <input 
                                       type="checkbox" 
-                                      checked={approvalModal.teachingSections.includes(sec)}
+                                      checked={approvalModal.teachingSections.includes(`${cls}-${sec}`)}
                                       onChange={(e) => {
                                         const current = [...approvalModal.teachingSections];
-                                        if (e.target.checked && !current.includes(sec)) current.push(sec);
-                                        else if (!e.target.checked) current.splice(current.indexOf(sec), 1);
+                                        const val = `${cls}-${sec}`;
+                                        if (e.target.checked && !current.includes(val)) current.push(val);
+                                        else if (!e.target.checked) current.splice(current.indexOf(val), 1);
                                         setApprovalModal({...approvalModal, teachingSections: current});
                                       }}
                                       className="w-3.5 h-3.5 text-emerald-500 rounded focus:ring-emerald-400 border-gray-200"
@@ -453,11 +458,12 @@ const AdminDashboard = () => {
                                   <label key={sec} className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-md cursor-pointer text-xs font-semibold text-gray-600 hover:bg-indigo-50 transition-colors">
                                     <input 
                                       type="checkbox" 
-                                      checked={(editModal.formData.teachingSections || []).includes(sec)}
+                                      checked={(editModal.formData.teachingSections || []).includes(`${cls}-${sec}`)}
                                       onChange={(e) => {
                                         const current = [...(editModal.formData.teachingSections || [])];
-                                        if (e.target.checked && !current.includes(sec)) current.push(sec);
-                                        else if (!e.target.checked) current.splice(current.indexOf(sec), 1);
+                                        const val = `${cls}-${sec}`;
+                                        if (e.target.checked && !current.includes(val)) current.push(val);
+                                        else if (!e.target.checked) current.splice(current.indexOf(val), 1);
                                         setEditModal({...editModal, formData: {...editModal.formData, teachingSections: current}});
                                       }}
                                       className="w-3.5 h-3.5 text-emerald-500 rounded focus:ring-emerald-400 border-gray-200"

@@ -10,7 +10,10 @@ export default function TeacherDashboard() {
 
   // Attendance State
   const [className, setClassName] = useState(user.teachingClasses?.[0] || '10');
-  const [section, setSection] = useState(user.teachingSections?.[0] || 'A');
+  const [section, setSection] = useState(() => {
+    const sec = user.teachingSections?.[0] || 'A';
+    return sec.includes('-') ? sec.split('-')[1] : sec;
+  });
   const [subject, setSubject] = useState(user.subjects?.[0] || 'Math');
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceRecords, setAttendanceRecords] = useState({});
