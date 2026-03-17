@@ -5,10 +5,23 @@ import api from '../api';
 export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState('attendance');
   const [students, setStudents] = useState([]);
+  
+  // Attendance State
   const [className, setClassName] = useState('10-A');
   const [subject, setSubject] = useState('Math');
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceRecords, setAttendanceRecords] = useState({});
+
+  // Exams State
+  const [exams, setExams] = useState([]);
+  const [examForm, setExamForm] = useState({ subject: '', className: '', date: '', startTime: '', duration: '', room: '', totalMarks: 100, instructions: '' });
+
+  // Marks State
+  const [selectedExamId, setSelectedExamId] = useState('');
+  const [marksRecords, setMarksRecords] = useState({});
+
+  // Tuition State
+  const [tuitionRequests, setTuitionRequests] = useState([]);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const navigate = useNavigate();
@@ -19,16 +32,30 @@ export default function TeacherDashboard() {
   };
 
   useEffect(() => {
-    if (activeTab === 'attendance') fetchStudents();
-  }, [activeTab, className]);
+    if (activeTab === 'attendance') fetchStudents(className);
+    else if (activeTab === 'exams') fetchExams();
+    else if (activeTab === 'marks') { fetchExams(); /* students fetched when exam selected */ }
+    else if (activeTab === 'tuition') fetchTuitionRequests();
+  }, [activeTab]);
 
-  const fetchStudents = async () => {
+  useEffect(() => {
+    if (activeTab === 'attendance') fetchStudents(className);
+  }, [className]);
+
+
+  // ---- ATTENDANCE LOGIC ----
+  const fetchStudents = async (cName) => {
+    if (!cName) return;
     try {
-      const { data } = await api.get('/admin/students?className=' + className);
+      const { data } = await api.get('/admin/students?className=' + cName);
       setStudents(data);
-      const initial = {};
-      data.forEach(s => initial[s._id] = 'present');
-      setAttendanceRecords(initial);
+      if (data.length > 0) {
+        const initial = {};
+        data.forEach(s => initial[s._id] = 'present');
+        setAttendanceRecords(initial);
+      } else {
+        setAttendanceRecords({});
+      }
     } catch (err) {
       console.error('Failed to fetch students', err);
     }
@@ -39,6 +66,7 @@ export default function TeacherDashboard() {
   };
 
   const submitAttendance = async () => {
+    if (students.length === 0) return alert('No students found to mark attendance.');
     try {
       const records = Object.entries(attendanceRecords).map(([studentId, status]) => ({
         studentId, status
@@ -46,10 +74,99 @@ export default function TeacherDashboard() {
       await api.post('/attendance/mark', {
         className, subject, date: attendanceDate, records
       });
-      alert('Attendance Marked Successfully');
+      alert('Attendance Marked Successfully!');
     } catch (err) {
-      alert('Error marking attendance');
+      alert('Error marking attendance: ' + (err.response?.data?.message || err.message));
     }
+  };
+
+  // ---- EXAMS LOGIC ----
+  const fetchExams = async () => {
+    try {
+      const { data } = await api.get('/exams');
+      setExams(data);
+    } catch(err) { console.error(err); }
+  };
+  const handleExamSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/exams', examForm);
+      alert('Exam Created!');
+      setExamForm({ subject: '', className: '', date: '', startTime: '', duration: '', room: '', totalMarks: 100, instructions: '' });
+      fetchExams();
+    } catch(err) { alert('Error creating exam'); }
+  };
+
+  // ---- MARKS LOGIC ----
+  useEffect(() => {
+    if (activeTab === 'marks' && selectedExamId) {
+      const exam = exams.find(e => e._id === selectedExamId);
+      if (exam) {
+        fetchStudents(exam.className);
+        fetchExistingMarks(exam._id);
+      }
+    } else if (activeTab === 'marks' && !selectedExamId) {
+       setStudents([]);
+    }
+  }, [selectedExamId, activeTab]);
+
+  const fetchExistingMarks = async (examId) => {
+    try {
+      const { data } = await api.get('/marks/exam/' + examId);
+      const initial = {};
+      data.forEach(m => initial[m.student._id] = { obtained: m.marksObtained, remarks: m.remarks });
+      setMarksRecords(initial);
+    } catch(err){ console.error(err); }
+  };
+
+  const handleMarkChange = (studentId, field, value) => {
+    setMarksRecords(prev => ({ 
+      ...prev, 
+      [studentId]: { ...(prev[studentId] || {}), [field]: value } 
+    }));
+  };
+
+  const submitMarks = async () => {
+    const exam = exams.find(e => e._id === selectedExamId);
+    if (!exam || students.length === 0) return alert('No valid exam or students.');
+    try {
+      let count = 0;
+      for (const student of students) {
+        const record = marksRecords[student._id];
+        if (record && record.obtained !== undefined && record.obtained !== '') {
+           await api.post('/marks', {
+             student: student._id,
+             exam: exam._id,
+             subject: exam.subject,
+             className: exam.className,
+             marksObtained: Number(record.obtained),
+             totalMarks: Number(exam.totalMarks),
+             remarks: record.remarks || ''
+           });
+           count++;
+        }
+      }
+      if (count === 0) return alert('Please enter marks for at least one student.');
+      alert('Marks Saved Successfully!');
+      fetchExistingMarks(exam._id);
+    } catch(err) {
+      alert('Error saving marks: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  // ---- TUITION LOGIC ----
+  const fetchTuitionRequests = async () => {
+    try {
+      const { data } = await api.get('/tuition/teacher');
+      setTuitionRequests(data);
+    } catch(err) { console.error(err); }
+  };
+  const handleTuitionResponse = async (id, status) => {
+    const reply = prompt(`Enter reply for the student (optional):`);
+    try {
+      await api.put(`/tuition/${id}/respond`, { status, teacherReply: reply });
+      fetchTuitionRequests();
+    } catch(err) { alert('Error responding to request'); }
   };
 
   return (
@@ -81,10 +198,11 @@ export default function TeacherDashboard() {
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-transparent'
                 }`}
               >
-                {tab === 'attendance' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-indigo-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                {tab === 'exams' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-indigo-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
-                {tab === 'marks' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-indigo-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>}
-                {tab === 'tuition' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-indigo-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>}
+                {/* Icons based on tab */}
+                {tab === 'attendance' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                {tab === 'exams' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
+                {tab === 'marks' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>}
+                {tab === 'tuition' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>}
                 {tab}
               </button>
             ))}
@@ -101,13 +219,7 @@ export default function TeacherDashboard() {
               <p className="text-xs text-gray-500 truncate">{user.email}</p>
             </div>
           </div>
-          <button 
-            onClick={logout} 
-            className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 py-2.5 rounded-xl hover:bg-gray-50 hover:text-red-600 hover:border-red-200 transition-colors duration-200 text-sm font-medium shadow-sm"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
+          <button onClick={logout} className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 py-2.5 rounded-xl hover:bg-gray-50 hover:text-red-600 transition-colors text-sm font-medium shadow-sm">
             Sign out
           </button>
         </div>
@@ -117,31 +229,23 @@ export default function TeacherDashboard() {
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 capitalize tracking-tight">{activeTab} Management</h1>
-          <p className="text-gray-500 mt-1">Manage class records, student performance and schedules.</p>
         </header>
         
+        {/* ATTENDANCE TAB */}
         {activeTab === 'attendance' && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6 md:p-8 bg-gray-50/30 border-b border-gray-100">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Class Section</label>
-                  <div className="relative">
-                    <input type="text" value={className} onChange={e => setClassName(e.target.value)} className="w-full pl-4 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none" placeholder="e.g. 10-A" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
-                  <div className="relative">
-                    <input type="text" value={subject} onChange={e => setSubject(e.target.value)} className="w-full pl-4 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none" placeholder="e.g. Mathematics" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
-                  <div className="relative">
-                    <input type="date" value={attendanceDate} onChange={e => setAttendanceDate(e.target.value)} className="w-full pl-4 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-gray-700" />
-                  </div>
-                </div>
+            <div className="p-6 md:p-8 bg-gray-50/30 border-b border-gray-100 flex gap-4 flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Class Section</label>
+                <input type="text" value={className} onChange={e => setClassName(e.target.value)} className="w-full pl-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20" placeholder="e.g. 10-A" />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
+                <input type="text" value={subject} onChange={e => setSubject(e.target.value)} className="w-full pl-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20" placeholder="e.g. Mathematics" />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                <input type="date" value={attendanceDate} onChange={e => setAttendanceDate(e.target.value)} className="w-full pl-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-gray-700" />
               </div>
             </div>
 
@@ -156,24 +260,16 @@ export default function TeacherDashboard() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {students.map(s => (
-                    <tr key={s._id} className="hover:bg-gray-50/50 transition-colors group">
+                    <tr key={s._id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="p-4 pl-8 font-mono text-sm text-gray-500">{s.rollNumber}</td>
-                      <td className="p-4 font-medium text-gray-900 flex items-center gap-3">
-                         <div className="h-8 w-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-xs font-bold">
-                           {s.name.charAt(0).toUpperCase()}
-                         </div>
-                         {s.name}
-                      </td>
+                      <td className="p-4 font-medium text-gray-900">{s.name}</td>
                       <td className="p-4 pr-8 text-right">
                         <select 
                           value={attendanceRecords[s._id] || 'present'} 
                           onChange={e => handleStatusChange(s._id, e.target.value)}
-                          className={`appearance-none bg-none outline-none py-1.5 pl-4 pr-8 rounded-lg text-sm font-medium border cursor-pointer inline-flex transition-colors bg-[url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23131313%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")] bg-[length:0.6em_auto] bg-no-repeat bg-[position:right_0.7rem_top_55%] ${
-                            attendanceRecords[s._id] === 'present' 
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
-                              : attendanceRecords[s._id] === 'absent' 
-                                ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-                                : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                          className={`appearance-none bg-none outline-none py-1.5 px-4 rounded-lg text-sm font-medium border cursor-pointer ${
+                            attendanceRecords[s._id] === 'present' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                            attendanceRecords[s._id] === 'absent' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}
                         >
                           <option value="present">Present</option>
@@ -186,44 +282,154 @@ export default function TeacherDashboard() {
                   {students.length === 0 && (
                     <tr>
                       <td colSpan="3" className="p-12 text-center text-gray-500">
-                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
-                          <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                          </svg>
-                        </div>
-                        <p>No students found for this class section.</p>
+                        No students found for this class section. Instruct parents or admin to register students to this section.
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-            
-            <div className="p-6 md:p-8 border-t border-gray-100 bg-gray-50/50 flex justify-end">
-              <button
-                onClick={submitAttendance}
-                className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-medium shadow-md shadow-indigo-500/20 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98] transition-all flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Submit Records
-              </button>
+            <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+              <button disabled={students.length === 0} onClick={submitAttendance} className="bg-indigo-600 text-white px-8 py-3 rounded-xl disabled:opacity-50">Save Attendance</button>
             </div>
           </div>
         )}
 
-        {activeTab !== 'attendance' && (
-          <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 border border-gray-100">
-              <svg className="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
+        {/* EXAMS TAB */}
+        {activeTab === 'exams' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-lg font-bold mb-4">Schedule New Exam</h3>
+              <form onSubmit={handleExamSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input required type="text" placeholder="Subject (e.g. Science)" value={examForm.subject} onChange={e=>setExamForm({...examForm, subject: e.target.value})} className="border p-2 rounded-xl" />
+                <input required type="text" placeholder="Class Name (e.g. 10-A)" value={examForm.className} onChange={e=>setExamForm({...examForm, className: e.target.value})} className="border p-2 rounded-xl" />
+                <input required type="date" value={examForm.date} onChange={e=>setExamForm({...examForm, date: e.target.value})} className="border p-2 rounded-xl" />
+                <input required type="time" value={examForm.startTime} onChange={e=>setExamForm({...examForm, startTime: e.target.value})} className="border p-2 rounded-xl" />
+                <input required type="text" placeholder="Duration (e.g. 2 hours)" value={examForm.duration} onChange={e=>setExamForm({...examForm, duration: e.target.value})} className="border p-2 rounded-xl" />
+                <input type="text" placeholder="Room/Hall (e.g. Lab 3)" value={examForm.room} onChange={e=>setExamForm({...examForm, room: e.target.value})} className="border p-2 rounded-xl" />
+                <input required type="number" placeholder="Total Marks" value={examForm.totalMarks} onChange={e=>setExamForm({...examForm, totalMarks: e.target.value})} className="border p-2 rounded-xl" />
+                <input type="text" placeholder="Instructions (optional)" value={examForm.instructions} onChange={e=>setExamForm({...examForm, instructions: e.target.value})} className="border p-2 rounded-xl md:col-span-2" />
+                <button type="submit" className="bg-indigo-600 text-white rounded-xl py-2 md:col-span-3">Create Exam</button>
+              </form>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1 capitalize">{activeTab} Module</h3>
-            <p className="text-gray-500 max-w-sm">This module is currently in development. Full functionality will be available in the next release.</p>
+
+            <h3 className="text-lg font-bold mt-8">Scheduled Exams</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {exams.map(ex => (
+                <div key={ex._id} className="bg-white border rounded-2xl p-4 shadow-sm">
+                  <h4 className="font-bold text-indigo-700">{ex.subject}</h4>
+                  <p className="text-sm text-gray-500 font-mono mb-2">Class: {ex.className}</p>
+                  <div className="text-sm">
+                    <p><strong>Date:</strong> {new Date(ex.date).toLocaleDateString()}</p>
+                    <p><strong>Time:</strong> {ex.startTime} ({ex.duration})</p>
+                    <p><strong>Marks:</strong> {ex.totalMarks}</p>
+                  </div>
+                </div>
+              ))}
+              {exams.length === 0 && <p className="text-gray-500">No exams scheduled yet.</p>}
+            </div>
           </div>
         )}
+
+        {/* MARKS TAB */}
+        {activeTab === 'marks' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+             <div className="p-6 border-b border-gray-100">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Select Exam</label>
+                <select value={selectedExamId} onChange={e => setSelectedExamId(e.target.value)} className="w-full md:w-1/2 p-2 border rounded-xl">
+                  <option value="">-- Choose an Exam --</option>
+                  {exams.map(ex => (
+                    <option key={ex._id} value={ex._id}>{ex.subject} ({ex.className}) - {new Date(ex.date).toLocaleDateString()}</option>
+                  ))}
+                </select>
+             </div>
+             
+             {selectedExamId && (
+               <>
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="p-4 pl-8">Student Name</th>
+                      <th className="p-4">Marks Obtained</th>
+                      <th className="p-4 pr-8">Remarks / Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {students.map(s => (
+                      <tr key={s._id}>
+                        <td className="p-4 pl-8 font-medium">{s.name} <span className="text-gray-400 font-mono ml-2">[{s.rollNumber}]</span></td>
+                        <td className="p-4">
+                          <input type="number" 
+                            className="border rounded px-3 py-1 w-24" 
+                            placeholder="Score"
+                            value={marksRecords[s._id]?.obtained || ''}
+                            onChange={(e) => handleMarkChange(s._id, 'obtained', e.target.value)}
+                          /> 
+                           <span className="text-sm text-gray-500 ml-2">/ {exams.find(e=>e._id===selectedExamId)?.totalMarks}</span>
+                        </td>
+                        <td className="p-4 pr-8">
+                          <input type="text" 
+                            className="border rounded px-3 py-1 w-full"
+                            placeholder="Optional remarks..."
+                            value={marksRecords[s._id]?.remarks || ''}
+                            onChange={(e) => handleMarkChange(s._id, 'remarks', e.target.value)}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                    {students.length === 0 && <tr><td colSpan="3" className="p-8 text-center text-gray-500">No students found in this class section.</td></tr>}
+                  </tbody>
+                </table>
+                <div className="p-6 border-t flex justify-end">
+                  <button onClick={submitMarks} className="bg-indigo-600 text-white px-8 py-3 rounded-xl disabled:opacity-50" disabled={students.length===0}>Save All Marks</button>
+                </div>
+               </>
+             )}
+          </div>
+        )}
+
+        {/* TUITION TAB */}
+        {activeTab === 'tuition' && (
+          <div className="space-y-6">
+             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                <h3 className="text-xl font-bold mb-1">Tuition Requests</h3>
+                <p className="text-gray-500 mb-4">Manage private tutoring requests from students and parents.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   {tuitionRequests.map(req => (
+                     <div key={req._id} className="border border-indigo-100 rounded-xl p-5 shadow-sm relative hover:border-indigo-300 transition-colors">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-bold text-lg">{req.student?.name}</h4>
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
+                            ${req.status === 'pending' ? 'bg-amber-100 text-amber-800' :
+                              req.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                            {req.status}
+                          </span>
+                        </div>
+                        <ul className="text-sm text-gray-600 space-y-1 mb-4">
+                          <li><strong>Class:</strong> {req.student?.className}</li>
+                          <li><strong>Subject needed:</strong> {req.subject}</li>
+                          <li><strong>Preferred time:</strong> {req.preferredTime || 'Anytime'}</li>
+                          {req.message && <li className="mt-2 text-gray-800 italic border-l-2 border-indigo-200 pl-2">"{req.message}"</li>}
+                        </ul>
+                        {req.status === 'pending' && (
+                          <div className="flex gap-2 border-t pt-3 border-gray-100">
+                             <button onClick={() => handleTuitionResponse(req._id, 'accepted')} className="flex-1 bg-emerald-500 text-white rounded-lg py-1.5 text-sm hover:bg-emerald-600">Accept</button>
+                             <button onClick={() => handleTuitionResponse(req._id, 'rejected')} className="flex-1 bg-red-50 text-red-600 border border-red-200 rounded-lg py-1.5 text-sm hover:bg-red-100">Reject</button>
+                          </div>
+                        )}
+                        {req.teacherReply && (
+                          <div className="mt-3 text-sm bg-gray-50 p-2 rounded text-indigo-900 border border-gray-200">
+                            <strong>Your Reply:</strong> {req.teacherReply}
+                          </div>
+                        )}
+                     </div>
+                   ))}
+                   {tuitionRequests.length === 0 && <p className="text-gray-500">No tuition requests pending or confirmed yet.</p>}
+                </div>
+             </div>
+          </div>
+        )}
+
       </main>
     </div>
   );
