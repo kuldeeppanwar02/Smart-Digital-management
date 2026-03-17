@@ -8,48 +8,61 @@ const UserRegistration = () => {
   const role = searchParams.get('role');
   
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    phone: '',
-    dob: '',
-    gender: 'Boy',
-    fatherName: '',
-    medium: 'English',
-    stream: 'None',
-    subjects: '',
-    teachingClasses: '',
-    schoolId: schoolId || '',
-    role: role || 'student'
+    name: '', email: '', password: '', phone: '', dob: '', gender: 'Boy', fatherName: '',
+    role: role || 'student', schoolId: schoolId || '',
+    className: '', section: '', medium: 'English', thirdLanguage: '', stream: 'None',
+    optionalSubjects: [], subjects: '', teachingClasses: '', teachingSections: ''
   });
+  
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!schoolId) {
-      setError('Invalid invite link. Missing school information.');
-    }
+    if (!schoolId) setError('Invalid invite link. Missing school information.');
   }, [schoolId]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  const handleOptionalSubjectToggle = (subject) => {
+    setFormData(prev => {
+      const current = [...prev.optionalSubjects];
+      if (current.includes(subject)) return { ...prev, optionalSubjects: current.filter(s => s !== subject) };
+      else return { ...prev, optionalSubjects: [...current, subject] };
+    });
+  };
+
+  const classLevel = parseInt(formData.className) || 0;
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
     
-    // format subjects/classes into arrays if Teacher
     const payload = { ...formData };
+    
+    // Clean up irrelevant student fields based on Class Level logic
+    if (role === 'student') {
+      if (['LKG', 'UKG', 'Playgroup'].includes(formData.className) || classLevel < 6 || classLevel > 8) {
+         payload.thirdLanguage = '';
+      }
+      if (classLevel < 11) {
+         payload.stream = 'None';
+         payload.optionalSubjects = [];
+      }
+    }
+    
     if (role === 'teacher') {
       payload.subjects = formData.subjects ? formData.subjects.split(',').map(s => s.trim()) : [];
       payload.teachingClasses = formData.teachingClasses ? formData.teachingClasses.split(',').map(c => c.trim()) : [];
+      payload.teachingSections = formData.teachingSections ? formData.teachingSections.split(',').map(s => s.trim()) : [];
     }
 
     try {
       await api.post('/auth/register', payload);
-      setSuccess('Registration successful! Please wait for the school admin to approve your account.');
+      setSuccess('Registration successful! Please wait for the admin to approve your account.');
       setTimeout(() => navigate('/'), 4000);
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
@@ -57,132 +70,153 @@ const UserRegistration = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-cyan-50 font-sans p-4 relative overflow-hidden">
-      <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-blue-400/20 rounded-full blur-3xl"></div>
-      
-      <div className="bg-white/80 backdrop-blur-xl p-10 rounded-3xl shadow-2xl shadow-indigo-900/10 w-full max-w-md border border-white relative z-10">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-4">
+      <div className="bg-white/80 backdrop-blur-xl p-10 rounded-3xl shadow-2xl w-full max-w-2xl border border-white">
         
         <div className="flex flex-col items-center mb-8">
-          <div className="h-16 w-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700 tracking-tight">
-            Join School Portal
-          </h2>
-          <p className="text-gray-500 text-sm mt-2 font-medium capitalize flex items-center gap-1.5 focus:outline-none">
-            Register as a <span className="bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full text-xs font-bold ring-1 ring-inset ring-indigo-700/10">{role || 'User'}</span>
-          </p>
+          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700">Join School Portal</h2>
+          <p className="text-gray-500 text-sm mt-2 font-medium">As a <span className="uppercase text-indigo-700 font-bold">{role}</span></p>
         </div>
         
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6 text-sm flex items-center gap-2">
-            <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-emerald-50 border-emerald-200 border text-emerald-700 p-4 rounded-xl mb-6 text-sm flex gap-3 items-start">
-            <svg className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <div>
-              <p className="font-semibold">{success}</p>
-              <p className="text-emerald-600 text-xs mt-1">Redirecting to login...</p>
-            </div>
-          </div>
-        )}
+        {error && <div className="bg-red-50 text-red-700 p-4 rounded-md mb-6 text-sm">{error}</div>}
+        {success && <div className="bg-emerald-50 text-emerald-700 p-4 rounded-xl mb-6 font-semibold">{success}</div>}
         
-        <form onSubmit={handleRegister} className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Full Name</label>
-              <input type="text" name="name" className="px-4 block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white shadow-sm py-2.5 border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm text-gray-800 outline-none" placeholder="John Doe" value={formData.name} onChange={handleChange} required disabled={!schoolId || success} />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Email Address</label>
-              <input type="email" name="email" className="px-4 block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white shadow-sm py-2.5 border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm text-gray-800 outline-none" placeholder="you@example.com" value={formData.email} onChange={handleChange} required disabled={!schoolId || success} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Password</label>
-              <input type="password" name="password" className="px-4 block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white shadow-sm py-2.5 border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm text-gray-800 outline-none" placeholder="••••••••" value={formData.password} onChange={handleChange} required disabled={!schoolId || success} />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Phone Number</label>
-              <input type="tel" name="phone" className="px-4 block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white shadow-sm py-2.5 border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm text-gray-800 outline-none" placeholder="+91 9876543210" value={formData.phone} onChange={handleChange} required disabled={!schoolId || success} />
-            </div>
-          </div>
-          {/* Shared Real-world Profile Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Date of Birth</label>
-              <input type="date" name="dob" className="px-4 block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white shadow-sm py-2.5 border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm text-gray-800 outline-none" value={formData.dob} onChange={handleChange} required disabled={!schoolId || success} />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Gender</label>
-              <select name="gender" className="px-4 block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white shadow-sm py-2.5 border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm text-gray-800 outline-none" value={formData.gender} onChange={handleChange} disabled={!schoolId || success}>
-                <option value="Boy">Boy (Male)</option>
-                <option value="Girl">Girl (Female)</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Father's Name</label>
-             <input type="text" name="fatherName" className="px-4 block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white shadow-sm py-2.5 border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm text-gray-800 outline-none" placeholder="Mr. Sharma" value={formData.fatherName} onChange={handleChange} required disabled={!schoolId || success} />
-          </div>
-
-          {/* Student Specific Fields */}
-          {role === 'student' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-              <div>
-                <label className="block text-xs font-bold text-blue-700 uppercase tracking-wider mb-1.5 ml-1">Medium</label>
-                <select name="medium" className="px-4 block w-full rounded-xl border-gray-200 bg-white shadow-sm py-2.5 border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-sm text-gray-800 outline-none" value={formData.medium} onChange={handleChange} disabled={!schoolId || success}>
-                  <option value="English">English</option>
-                  <option value="Hindi">Hindi</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-blue-700 uppercase tracking-wider mb-1.5 ml-1">Stream (11/12th Only)</label>
-                <select name="stream" className="px-4 block w-full rounded-xl border-gray-200 bg-white shadow-sm py-2.5 border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-sm text-gray-800 outline-none" value={formData.stream} onChange={handleChange} disabled={!schoolId || success}>
-                  <option value="None">Not Applicable</option>
-                  <option value="Science">Science (PCB/PCM)</option>
-                  <option value="Commerce">Commerce</option>
-                  <option value="Arts">Arts / Humanities</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          {/* Teacher Specific Fields */}
-          {role === 'teacher' && (
-            <div className="space-y-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
-              <div>
-                <label className="block text-xs font-bold text-indigo-700 uppercase tracking-wider mb-1.5 ml-1">Teaching Subjects</label>
-                <input type="text" name="subjects" className="px-4 block w-full rounded-xl border-gray-200 bg-white shadow-sm py-2.5 border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm text-gray-800 outline-none" placeholder="e.g. Mathematics, Physics" value={formData.subjects} onChange={handleChange} disabled={!schoolId || success} />
-                <p className="text-[10px] text-gray-400 mt-1 ml-1">Comma separated</p>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-indigo-700 uppercase tracking-wider mb-1.5 ml-1">Preferred Classes</label>
-                <input type="text" name="teachingClasses" className="px-4 block w-full rounded-xl border-gray-200 bg-white shadow-sm py-2.5 border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm text-gray-800 outline-none" placeholder="e.g. 10, 11, 12" value={formData.teachingClasses} onChange={handleChange} disabled={!schoolId || success} />
-                <p className="text-[10px] text-gray-400 mt-1 ml-1">Comma separated</p>
-              </div>
-            </div>
-          )}
-
-          <hr className="border-gray-100 my-4" />
+        <form onSubmit={handleRegister} className="space-y-4 max-h-[65vh] overflow-y-auto pr-4 custom-scrollbar">
           
-          <button
-            type="submit"
-            disabled={!schoolId || success}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl hover:shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-0.5 transition-all duration-200 mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            Submit Application
+          {/* PROFILE BASIC INFO */}
+          <h3 className="font-bold text-gray-800 border-b pb-2">Basic Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="text" name="name" className="px-4 py-2 border rounded-xl w-full" placeholder="Full Name" value={formData.name} onChange={handleChange} required />
+            <input type="email" name="email" className="px-4 py-2 border rounded-xl w-full" placeholder="Email Address" value={formData.email} onChange={handleChange} required />
+            <input type="password" name="password" className="px-4 py-2 border rounded-xl w-full" placeholder="Password" value={formData.password} onChange={handleChange} required />
+            <input type="tel" name="phone" className="px-4 py-2 border rounded-xl w-full" placeholder="Phone Number" value={formData.phone} onChange={handleChange} required />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input type="date" name="dob" className="px-4 py-2 border rounded-xl w-full text-gray-700" value={formData.dob} onChange={handleChange} required />
+            <select name="gender" className="px-4 py-2 border rounded-xl w-full" value={formData.gender} onChange={handleChange}>
+              <option value="Boy">Boy (Male)</option><option value="Girl">Girl (Female)</option><option value="Other">Other</option>
+            </select>
+            <input type="text" name="fatherName" className="px-4 py-2 border rounded-xl w-full" placeholder="Father's Name" value={formData.fatherName} onChange={handleChange} required />
+          </div>
+
+          {/* STUDENT NCERT LOGIC */}
+          {role === 'student' && (
+            <>
+              <h3 className="font-bold text-gray-800 border-b pb-2 mt-6">Academic Details</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                <div>
+                  <label className="block text-xs font-bold text-blue-700 mb-1">Class</label>
+                  <select name="className" className="px-4 py-2 border rounded-xl w-full" value={formData.className} onChange={handleChange} required>
+                    <option value="">Select Class</option>
+                    <optgroup label="Pre-Primary"><option value="Playgroup">Playgroup</option><option value="LKG">LKG</option><option value="UKG">UKG</option></optgroup>
+                    <optgroup label="Primary"><option value="1">Class 1</option><option value="2">Class 2</option><option value="3">Class 3</option><option value="4">Class 4</option><option value="5">Class 5</option></optgroup>
+                    <optgroup label="Middle"><option value="6">Class 6</option><option value="7">Class 7</option><option value="8">Class 8</option></optgroup>
+                    <optgroup label="High School"><option value="9">Class 9</option><option value="10">Class 10</option></optgroup>
+                    <optgroup label="Senior Secondary"><option value="11">Class 11</option><option value="12">Class 12</option></optgroup>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-blue-700 mb-1">Section / Group</label>
+                  <select name="section" className="px-4 py-2 border rounded-xl w-full" value={formData.section} onChange={handleChange} required>
+                     <option value="">Select Section</option>
+                     <option value="A">Section A</option><option value="B">Section B</option><option value="C">Section C</option>
+                     <option value="Group 1">Group 1</option><option value="Group 2">Group 2</option>
+                  </select>
+                </div>
+                <div>
+                   <label className="block text-xs font-bold text-blue-700 mb-1">Medium</label>
+                   <select name="medium" className="px-4 py-2 border rounded-xl w-full" value={formData.medium} onChange={handleChange}>
+                     <option value="English">English Medium</option><option value="Hindi">Hindi Medium</option>
+                   </select>
+                </div>
+              </div>
+
+              {/* Dynamic Step: Class 6 to 8 Third Language */}
+              {classLevel >= 6 && classLevel <= 8 && (
+                 <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 animate-fade-in">
+                    <label className="block text-xs font-bold text-emerald-800 mb-2">Select Third Language (Compulsory for Middle School)</label>
+                    <select name="thirdLanguage" className="px-4 py-2 border rounded-xl w-full max-w-xs" value={formData.thirdLanguage} onChange={handleChange} required>
+                       <option value="">-- Select Language --</option>
+                       <option value="Sanskrit">Sanskrit</option>
+                       <option value="Urdu">Urdu</option>
+                       <option value="Punjabi">Punjabi</option>
+                       <option value="French">French</option>
+                    </select>
+                 </div>
+              )}
+
+              {/* Dynamic Step: Class 11 and 12 Streams */}
+              {classLevel >= 11 && (
+                 <div className="p-5 bg-purple-50 rounded-xl border border-purple-100 animate-fade-in space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-purple-800 mb-2">Select Stream</label>
+                      <select name="stream" className="px-4 py-2 border rounded-xl w-full max-w-xs" value={formData.stream} onChange={handleChange} required>
+                         <option value="None">-- Select Stream --</option>
+                         <option value="Science PCM">Science (PCM - Math)</option>
+                         <option value="Science PCB">Science (PCB - Biology)</option>
+                         <option value="Commerce">Commerce</option>
+                         <option value="Arts">Arts / Humanities</option>
+                      </select>
+                    </div>
+
+                    {/* Optional Subjects based on Stream */}
+                    {formData.stream && formData.stream !== 'None' && (
+                       <div>
+                          <label className="block text-xs font-bold text-purple-800 mb-2">Select Optional / Additional Subject (Pick 1 or 2)</label>
+                          <div className="flex flex-wrap gap-2">
+                            {formData.stream.includes('Science') && ['Computer Science', 'Physical Education', 'Economics', 'Drawing'].map(sub => (
+                              <label key={sub} className="flex items-center gap-2 bg-white px-3 py-1.5 border rounded-lg cursor-pointer text-sm">
+                                <input type="checkbox" checked={formData.optionalSubjects.includes(sub)} onChange={() => handleOptionalSubjectToggle(sub)} />
+                                {sub}
+                              </label>
+                            ))}
+                            {formData.stream === 'Commerce' && ['Mathematics', 'Informatics Practices', 'Physical Education'].map(sub => (
+                              <label key={sub} className="flex items-center gap-2 bg-white px-3 py-1.5 border rounded-lg cursor-pointer text-sm">
+                                <input type="checkbox" checked={formData.optionalSubjects.includes(sub)} onChange={() => handleOptionalSubjectToggle(sub)} />
+                                {sub}
+                              </label>
+                            ))}
+                            {formData.stream === 'Arts' && ['History', 'Geography', 'Political Science', 'Sociology', 'Psychology', 'Hindi Elective'].map(sub => (
+                              <label key={sub} className="flex items-center gap-2 bg-white px-3 py-1.5 border rounded-lg cursor-pointer text-sm">
+                                <input type="checkbox" checked={formData.optionalSubjects.includes(sub)} onChange={() => handleOptionalSubjectToggle(sub)} />
+                                {sub}
+                              </label>
+                            ))}
+                          </div>
+                       </div>
+                    )}
+                 </div>
+              )}
+            </>
+          )}
+
+          {/* TEACHER SPECIFIC */}
+          {role === 'teacher' && (
+            <>
+              <h3 className="font-bold text-gray-800 border-b pb-2 mt-6">Allocation Details</h3>
+              <div className="space-y-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                <div>
+                  <label className="block text-xs font-bold text-indigo-700 mb-1">Teaching Subjects (Comma separated)</label>
+                  <input type="text" name="subjects" className="px-4 py-2 border rounded-xl w-full" placeholder="e.g. Mathematics, Science" value={formData.subjects} onChange={handleChange} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                   <div>
+                     <label className="block text-xs font-bold text-indigo-700 mb-1">Assigned Classes</label>
+                     <input type="text" name="teachingClasses" className="px-4 py-2 border rounded-xl w-full" placeholder="e.g. 10, 11" value={formData.teachingClasses} onChange={handleChange} />
+                   </div>
+                   <div>
+                     <label className="block text-xs font-bold text-indigo-700 mb-1">Assigned Sections</label>
+                     <input type="text" name="teachingSections" className="px-4 py-2 border rounded-xl w-full" placeholder="e.g. A, B, Group 1" value={formData.teachingSections} onChange={handleChange} />
+                   </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          <button type="submit" disabled={!schoolId || success} className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-colors mt-6">
+            Submit Registration
           </button>
         </form>
       </div>
