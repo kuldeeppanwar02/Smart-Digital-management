@@ -109,10 +109,10 @@ const AdminDashboard = () => {
         medium: u.medium || '',
         thirdLanguage: u.thirdLanguage || '',
         stream: u.stream || '',
-        optionalSubjects: u.optionalSubjects ? u.optionalSubjects.join(', ') : '',
-        subjects: u.subjects ? u.subjects.join(', ') : '', 
-        teachingClasses: u.teachingClasses ? u.teachingClasses.join(', ') : '',
-        teachingSections: u.teachingSections ? u.teachingSections.join(', ') : ''
+        optionalSubjects: u.optionalSubjects ? (Array.isArray(u.optionalSubjects) ? u.optionalSubjects.join(', ') : u.optionalSubjects) : '',
+        subjects: Array.isArray(u.subjects) ? u.subjects : (u.subjects ? String(u.subjects).split(',').map(s=>s.trim()).filter(Boolean) : []), 
+        teachingClasses: Array.isArray(u.teachingClasses) ? u.teachingClasses : (u.teachingClasses ? String(u.teachingClasses).split(',').map(s=>s.trim()).filter(Boolean) : []),
+        teachingSections: Array.isArray(u.teachingSections) ? u.teachingSections : (u.teachingSections ? String(u.teachingSections).split(',').map(s=>s.trim()).filter(Boolean) : [])
       }
     });
   };
