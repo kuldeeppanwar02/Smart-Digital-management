@@ -14,6 +14,12 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
+  // Derive unique classes and sections from current students
+  const availableClasses = [...new Set(users.filter(u => u.role === 'student' && u.className).map(u => u.className))].sort();
+  const availableSections = [...new Set(users.filter(u => u.role === 'student' && u.section).map(u => u.section))].sort();
+  // Predefined standard subjects for quick selection
+  const standardSubjects = ["Mathematics", "Science", "English", "Hindi", "Social Science", "Physics", "Chemistry", "Biology", "Computer Science", "Accounts", "Economics", "History", "Geography"];
+
   useEffect(() => {
     fetchUsers();
     if (user.role === 'school_admin' || user.role === 'principal') {
@@ -41,9 +47,9 @@ const AdminDashboard = () => {
 
   const handleApproveClick = (u) => {
     if (u.role === 'student') {
-      setApprovalModal({ isOpen: true, user: u, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' });
+      setApprovalModal({ isOpen: true, user: u, rollNumber: '', className: '', section: '', subjects: [], teachingClasses: [], teachingSections: [] });
     } else if (u.role === 'teacher') {
-      setApprovalModal({ isOpen: true, user: u, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' });
+      setApprovalModal({ isOpen: true, user: u, rollNumber: '', className: '', section: '', subjects: [], teachingClasses: [], teachingSections: [] });
     } else {
       approveUser(u._id, {});
     }
@@ -52,7 +58,7 @@ const AdminDashboard = () => {
   const approveUser = async (id, payload = {}) => {
     try {
       await api.patch(`/admin/users/${id}/approve`, payload);
-      setApprovalModal({ isOpen: false, user: null, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' });
+      setApprovalModal({ isOpen: false, user: null, rollNumber: '', className: '', section: '', subjects: [], teachingClasses: [], teachingSections: [] });
       fetchUsers();
     } catch (err) {
       alert('Failed to approve');
@@ -105,9 +111,10 @@ const AdminDashboard = () => {
     try {
       let payload = { ...editModal.formData };
       if (editModal.user.role === 'teacher') {
-        payload.subjects = payload.subjects.split(',').map(s => s.trim()).filter(Boolean);
-        payload.teachingClasses = payload.teachingClasses.split(',').map(s => s.trim()).filter(Boolean);
-        if (payload.teachingSections) payload.teachingSections = payload.teachingSections.split(',').map(s => s.trim()).filter(Boolean);
+        // Checkboxes give us arrays directly now instead of strings
+        payload.subjects = payload.subjects || [];
+        payload.teachingClasses = payload.teachingClasses || [];
+        payload.teachingSections = payload.teachingSections || [];
       } else if (editModal.user.role === 'student' && typeof payload.optionalSubjects === 'string') {
         payload.optionalSubjects = payload.optionalSubjects.split(',').map(s => s.trim()).filter(Boolean);
       }
@@ -203,43 +210,88 @@ const AdminDashboard = () => {
                   </>
                 )}
                 {approvalModal.user?.role === 'teacher' && (
-                  <>
+                  <div className="space-y-6">
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Subjects (Comma separated)</label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. Math, Science"
-                        value={approvalModal.subjects}
-                        onChange={(e) => setApprovalModal({...approvalModal, subjects: e.target.value})}
-                        className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
-                      />
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Assign Subjects</label>
+                      <div className="flex flex-wrap gap-2">
+                        {standardSubjects.map(sub => (
+                          <label key={sub} className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium hover:bg-gray-100 transition-colors">
+                            <input 
+                              type="checkbox" 
+                              checked={approvalModal.subjects.includes(sub)}
+                              onChange={(e) => {
+                                const current = [...approvalModal.subjects];
+                                if (e.target.checked) current.push(sub);
+                                else current.splice(current.indexOf(sub), 1);
+                                setApprovalModal({...approvalModal, subjects: current});
+                              }}
+                              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                            />
+                            {sub}
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Teaching Classes</label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. 10, 11"
-                        value={approvalModal.teachingClasses}
-                        onChange={(e) => setApprovalModal({...approvalModal, teachingClasses: e.target.value})}
-                        className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Teaching Sections</label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. A, B"
-                        value={approvalModal.teachingSections}
-                        onChange={(e) => setApprovalModal({...approvalModal, teachingSections: e.target.value})}
-                        className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
-                      />
-                    </div>
-                  </>
+
+                    {availableClasses.length > 0 && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Assign Classes (Derived from existing students)</label>
+                        <div className="flex flex-wrap gap-2">
+                          {availableClasses.map(cls => (
+                            <label key={cls} className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium hover:bg-indigo-100 transition-colors">
+                              <input 
+                                type="checkbox" 
+                                checked={approvalModal.teachingClasses.includes(cls)}
+                                onChange={(e) => {
+                                  const current = [...approvalModal.teachingClasses];
+                                  if (e.target.checked) current.push(cls);
+                                  else current.splice(current.indexOf(cls), 1);
+                                  setApprovalModal({...approvalModal, teachingClasses: current});
+                                }}
+                                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                              />
+                              Class {cls}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {availableSections.length > 0 && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Assign Sections (Derived from existing students)</label>
+                        <div className="flex flex-wrap gap-2">
+                          {availableSections.map(sec => (
+                            <label key={sec} className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium hover:bg-emerald-100 transition-colors">
+                              <input 
+                                type="checkbox" 
+                                checked={approvalModal.teachingSections.includes(sec)}
+                                onChange={(e) => {
+                                  const current = [...approvalModal.teachingSections];
+                                  if (e.target.checked) current.push(sec);
+                                  else current.splice(current.indexOf(sec), 1);
+                                  setApprovalModal({...approvalModal, teachingSections: current});
+                                }}
+                                className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
+                              />
+                              Section {sec}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(availableClasses.length === 0 || availableSections.length === 0) && (
+                       <p className="text-xs text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100 font-medium">
+                         Note: No active students found in the system yet. Once students register, their classes and sections will appear here for you to quickly assign to teachers.
+                       </p>
+                    )}
+                  </div>
                 )}
               </div>
               <div className="mt-8 flex gap-3">
                 <button 
-                  onClick={() => setApprovalModal({ isOpen: false, user: null, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' })}
+                  onClick={() => setApprovalModal({ isOpen: false, user: null, rollNumber: '', className: '', section: '', subjects: [], teachingClasses: [], teachingSections: [] })}
                   className="flex-1 py-2.5 rounded-xl font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
@@ -251,9 +303,9 @@ const AdminDashboard = () => {
                       payload = { rollNumber: approvalModal.rollNumber, className: approvalModal.className, section: approvalModal.section };
                     } else if (approvalModal.user.role === 'teacher') {
                       payload = {
-                        subjects: approvalModal.subjects ? approvalModal.subjects.split(',').map(s=>s.trim()).filter(Boolean) : [],
-                        teachingClasses: approvalModal.teachingClasses ? approvalModal.teachingClasses.split(',').map(s=>s.trim()).filter(Boolean) : [],
-                        teachingSections: approvalModal.teachingSections ? approvalModal.teachingSections.split(',').map(s=>s.trim()).filter(Boolean) : []
+                        subjects: approvalModal.subjects,
+                        teachingClasses: approvalModal.teachingClasses,
+                        teachingSections: approvalModal.teachingSections
                       };
                     }
                     approveUser(approvalModal.user._id, payload);
@@ -346,20 +398,83 @@ const AdminDashboard = () => {
                   )}
 
                   {editModal.user?.role === 'teacher' && (
-                    <>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Subjects (Comma separated)</label>
-                        <input type="text" name="subjects" value={editModal.formData.subjects} onChange={handleEditChange} placeholder="Maths, Science" className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
+                    <div className="space-y-6 pt-2 col-span-2">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Assign Subjects</label>
+                      <div className="flex flex-wrap gap-2">
+                        {standardSubjects.map(sub => (
+                          <label key={sub} className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium hover:bg-gray-100 transition-colors">
+                            <input 
+                              type="checkbox" 
+                              checked={(editModal.formData.subjects || []).includes(sub)}
+                              onChange={(e) => {
+                                const current = [...(editModal.formData.subjects || [])];
+                                if (e.target.checked) current.push(sub);
+                                else current.splice(current.indexOf(sub), 1);
+                                setEditModal({...editModal, formData: {...editModal.formData, subjects: current}});
+                              }}
+                              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                            />
+                            {sub}
+                          </label>
+                        ))}
                       </div>
+                    </div>
+
+                    {availableClasses.length > 0 && (
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Teaching Classes</label>
-                        <input type="text" name="teachingClasses" value={editModal.formData.teachingClasses} onChange={handleEditChange} placeholder="10, 11" className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Assign Classes (Derived from existing students)</label>
+                        <div className="flex flex-wrap gap-2">
+                          {availableClasses.map(cls => (
+                            <label key={cls} className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium hover:bg-indigo-100 transition-colors">
+                              <input 
+                                type="checkbox" 
+                                checked={(editModal.formData.teachingClasses || []).includes(cls)}
+                                onChange={(e) => {
+                                  const current = [...(editModal.formData.teachingClasses || [])];
+                                  if (e.target.checked) current.push(cls);
+                                  else current.splice(current.indexOf(cls), 1);
+                                  setEditModal({...editModal, formData: {...editModal.formData, teachingClasses: current}});
+                                }}
+                                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                              />
+                              Class {cls}
+                            </label>
+                          ))}
+                        </div>
                       </div>
+                    )}
+
+                    {availableSections.length > 0 && (
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Teaching Sections</label>
-                        <input type="text" name="teachingSections" value={editModal.formData.teachingSections} onChange={handleEditChange} placeholder="A, B" className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Assign Sections (Derived from existing students)</label>
+                        <div className="flex flex-wrap gap-2">
+                          {availableSections.map(sec => (
+                            <label key={sec} className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium hover:bg-emerald-100 transition-colors">
+                              <input 
+                                type="checkbox" 
+                                checked={(editModal.formData.teachingSections || []).includes(sec)}
+                                onChange={(e) => {
+                                  const current = [...(editModal.formData.teachingSections || [])];
+                                  if (e.target.checked) current.push(sec);
+                                  else current.splice(current.indexOf(sec), 1);
+                                  setEditModal({...editModal, formData: {...editModal.formData, teachingSections: current}});
+                                }}
+                                className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
+                              />
+                              Section {sec}
+                            </label>
+                          ))}
+                        </div>
                       </div>
-                    </>
+                    )}
+
+                    {(availableClasses.length === 0 || availableSections.length === 0) && (
+                       <p className="text-xs text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100 font-medium">
+                         Note: No active students found in the system yet. Once students register, their classes and sections will appear here for you to quickly assign to teachers.
+                       </p>
+                    )}
+                  </div>
                   )}
                 </div>
                 
