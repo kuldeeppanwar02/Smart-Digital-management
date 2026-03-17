@@ -6,9 +6,11 @@ export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState('attendance');
   const [students, setStudents] = useState([]);
   
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
   // Attendance State
-  const [className, setClassName] = useState('10-A');
-  const [subject, setSubject] = useState('Math');
+  const [className, setClassName] = useState(user.teachingClasses?.[0] || '10-A');
+  const [subject, setSubject] = useState(user.subjects?.[0] || 'Math');
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceRecords, setAttendanceRecords] = useState({});
 
