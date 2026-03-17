@@ -201,24 +201,26 @@ const AdminDashboard = () => {
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Class Level</label>
-                        <input 
-                          type="text" 
-                          placeholder="e.g. 10"
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Class</label>
+                        <select 
                           value={approvalModal.className}
                           onChange={(e) => setApprovalModal({...approvalModal, className: e.target.value})}
                           className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
-                        />
+                        >
+                          <option value="">Select Class</option>
+                          {standardClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Section</label>
-                        <input 
-                          type="text" 
-                          placeholder="e.g. A"
+                        <select 
                           value={approvalModal.section}
                           onChange={(e) => setApprovalModal({...approvalModal, section: e.target.value})}
                           className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
-                        />
+                        >
+                          <option value="">Select Section</option>
+                          {standardSections.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
                       </div>
                     </div>
                     <div>
@@ -230,6 +232,28 @@ const AdminDashboard = () => {
                         onChange={(e) => setApprovalModal({...approvalModal, rollNumber: e.target.value})}
                         className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1">Optional / Additional Subjects</label>
+                      <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 flex flex-wrap gap-2">
+                        {["Physical Education", "Fine Arts", "Computer Science", "Information Practices", "Economics", "Psychology", "Music"].map(sub => (
+                           <label key={sub} className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium hover:bg-gray-50 hover:border-indigo-200 transition-all">
+                             <input 
+                               type="checkbox" 
+                               checked={(approvalModal.optionalSubjects || []).includes(sub)}
+                               onChange={(e) => {
+                                 const currentStr = approvalModal.optionalSubjects;
+                                 let current = Array.isArray(currentStr) ? [...currentStr] : (currentStr ? currentStr.split(',').map(s=>s.trim()) : []);
+                                 if (e.target.checked && !current.includes(sub)) current.push(sub);
+                                 else if (!e.target.checked) current = current.filter(s => s !== sub);
+                                 setApprovalModal({...approvalModal, optionalSubjects: current});
+                               }}
+                               className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
+                             />
+                             {sub}
+                           </label>
+                        ))}
+                      </div>
                     </div>
                   </>
                 )}
@@ -391,11 +415,17 @@ const AdminDashboard = () => {
                     <>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Class</label>
-                        <input type="text" name="className" value={editModal.formData.className} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
+                        <select name="className" value={editModal.formData.className} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800">
+                          <option value="">Select Class</option>
+                          {standardClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Section</label>
-                        <input type="text" name="section" value={editModal.formData.section} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
+                        <select name="section" value={editModal.formData.section} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800">
+                          <option value="">Select Section</option>
+                          {standardSections.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Roll Number</label>
@@ -410,9 +440,9 @@ const AdminDashboard = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Stream</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Stream (For 11th & 12th)</label>
                         <select name="stream" value={editModal.formData.stream} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800">
-                          <option value="None">None</option>
+                          <option value="None">None (Primary/Secondary)</option>
                           <option value="Science PCM">Science PCM</option>
                           <option value="Science PCB">Science PCB</option>
                           <option value="Commerce">Commerce</option>
@@ -420,12 +450,36 @@ const AdminDashboard = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Third Lang</label>
-                        <input type="text" name="thirdLanguage" value={editModal.formData.thirdLanguage} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Third Language</label>
+                        <select name="thirdLanguage" value={editModal.formData.thirdLanguage} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800">
+                          <option value="None">None</option>
+                          <option value="Sanskrit">Sanskrit</option>
+                          <option value="Urdu">Urdu</option>
+                          <option value="French">French</option>
+                          <option value="Punjabi">Punjabi</option>
+                        </select>
                       </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Optional Subjects (Comma separated)</label>
-                        <input type="text" name="optionalSubjects" value={editModal.formData.optionalSubjects} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
+                      <div className="col-span-1 md:col-span-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1">Optional / Additional Subjects</label>
+                        <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 flex flex-wrap gap-2">
+                          {["Physical Education", "Fine Arts", "Computer Science", "Information Practices", "Economics", "Psychology", "Music"].map(sub => (
+                             <label key={sub} className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium hover:bg-gray-50 hover:border-indigo-200 transition-all">
+                               <input 
+                                 type="checkbox" 
+                                 checked={(editModal.formData.optionalSubjects || []).includes(sub)}
+                                 onChange={(e) => {
+                                   const currentStr = editModal.formData.optionalSubjects;
+                                   let current = Array.isArray(currentStr) ? [...currentStr] : (currentStr ? currentStr.split(',').map(s=>s.trim()) : []);
+                                   if (e.target.checked && !current.includes(sub)) current.push(sub);
+                                   else if (!e.target.checked) current = current.filter(s => s !== sub);
+                                   setEditModal({...editModal, formData: {...editModal.formData, optionalSubjects: current}});
+                                 }}
+                                 className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
+                               />
+                               {sub}
+                             </label>
+                          ))}
+                        </div>
                       </div>
                     </>
                   )}
