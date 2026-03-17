@@ -487,8 +487,26 @@ const AdminDashboard = () => {
 
                   {editModal.user?.role === 'teacher' && (
                     <div className="space-y-6 pt-2 col-span-2">
+                    <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                      <label className="block text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">Class Teacher Designation (Optional)</label>
+                      <p className="text-xs text-indigo-600 mb-3">Assigning a teacher as a Class Teacher gives them exclusive permission to build and manage their class's weekly timetable.</p>
+                      <select 
+                        name="classTeacherOf" 
+                        value={editModal.formData.classTeacherOf || ""} 
+                        onChange={handleEditChange} 
+                        className="w-full bg-white border border-indigo-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-indigo-900"
+                      >
+                        <option value="">None</option>
+                        {standardClasses.map(cls => (
+                           standardSections.map(sec => (
+                             <option key={`${cls}-${sec}`} value={`${cls}-${sec}`}>Class {cls} - Section {sec}</option>
+                           ))
+                        ))}
+                      </select>
+                    </div>
+                    
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1">Assign Classes & Sections</label>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1">Assign Subject Classes & Sections</label>
                       <div className="space-y-3">
                         {standardClasses.map(cls => (
                           <div key={cls} className="bg-indigo-50/30 p-3 rounded-xl border border-indigo-50">

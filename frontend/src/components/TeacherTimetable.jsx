@@ -24,20 +24,67 @@ export default function TeacherTimetable() {
     }
   };
 
-  const getPeriodData = (day, periodNum) => {
-    // A teacher might have multiple records for the same day (e.g., different classes). 
-    // They should not have overlapping periods. We find the one that matches periodNum.
-    const dayData = timetable.filter(d => d.dayOfWeek === day);
-    if (!dayData || dayData.length === 0) return null;
-    
-    // Search across all class records for this day to find the period
-    for (const record of dayData) {
-      const period = record.periodInfo.find(p => p.periodNumber === periodNum);
-      if (period) {
-        return { ...period, className: record.className, section: record.section };
-      }
-    }
-    return null;
+  const getDatesForCurrentWeek = () => {
+    const today = new Date();
+    // Get Monday of current week
+    const monday = new Date(today);
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+    monday.setDate(diff);
+
+    return days.map((dayName, index) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + index);
+      return {
+        name: dayName,
+        dateString: date.toISOString().split('T')[0],
+        isToday: date.toDateString() === today.toDateString()
+      };
+    });
+  };
+
+  const weekDays = getDatesForCurrentWeek();
+
+  const getDailyScheduleConfigs = (dayName, dateString) => {
+     // A teacher might have multiple overlapping classes. We must group them by their class/section first.
+     // Then resolve overrides *per class section* because one class might have a holiday while another doesn't.
+     const relevantConfigs = [];
+     
+     // 1. Get all unique class+section combos for this teacher on this day
+     const classComboSet = new Set(timetable.map(t => `${t.className}-${t.section}`));
+     
+     classComboSet.forEach(combo => {
+        const [cls, sec] = combo.split('-');
+        
+        // Find base template for this specific class group
+        const baseTmp = timetable.find(t => t.className === cls && t.section === sec && t.dayOfWeek === dayName && t.isBaseTemplate);
+        
+        // Find override for this specific class group on this exact date
+        const overrideTmp = timetable.find(t => t.className === cls && t.section === sec && t.dateOverride === dateString);
+        
+        const activeDoc = overrideTmp || baseTmp;
+        if (activeDoc) relevantConfigs.push(activeDoc);
+     });
+     
+     return relevantConfigs;
+  };
+
+  const getPeriodData = (dailyConfigs, periodNum) => {
+     // Search across the active resolved configs for this day to find the target period assigned to this teacher
+     for (const record of dailyConfigs) {
+       if (record.isHoliday) continue;
+       const period = record.periodInfo.find(p => p.periodNumber === periodNum && p.teacher && p.teacher._id === JSON.parse(localStorage.getItem('user'))._id);
+       if (period) {
+         return { ...period, className: record.className, section: record.section, isCancelled: period.subject === 'Cancelled' };
+       }
+     }
+     
+     // Check if the teacher has any periods assigned that day... if the entire record set says holiday, return a holiday flag
+     if (dailyConfigs.length > 0 && dailyConfigs.every(c => c.isHoliday)) {
+         return { isHoliday: true };
+     }
+
+     return null;
   };
 
   const downloadPDF = async () => {
@@ -96,34 +143,53 @@ export default function TeacherTimetable() {
             </tr>
           </thead>
           <tbody>
-            {days.map(day => {
-              const rowHasData = timetable.some(t => t.dayOfWeek === day && t.periodInfo.length > 0);
-              const isToday = new Date().toLocaleDateString('en-US', { weekday: 'long' }) === day;
-              
+            {weekDays.map(dayObj => {
+              const dailyConfigs = getDailyScheduleConfigs(dayObj.name, dayObj.dateString);
+              // Quick check if the whole day across all their classes is marked as holiday
+              const overallHoliday = dailyConfigs.length > 0 && dailyConfigs.every(c => c.isHoliday);
+
+              if (overallHoliday) {
+                return (
+                  <tr key={dayObj.name} className={`${dayObj.isToday ? 'bg-rose-50/30' : 'bg-gray-50/10'}`}>
+                    <td className="p-4 border border-rose-100 font-bold text-rose-800 text-center relative z-10 w-24">
+                      {dayObj.name}
+                      <span className="block text-[10px] font-bold text-rose-500 mt-1">{dayObj.dateString}</span>
+                      {dayObj.isToday && <span className="block text-[10px] text-rose-600 uppercase tracking-widest mt-1">Today</span>}
+                    </td>
+                    <td colSpan={maxPeriods} className="bg-rose-50/50 p-6 text-center border border-rose-100">
+                      <span className="text-xl mr-2">🏖️</span>
+                      <span className="font-bold text-rose-700 tracking-wider uppercase text-sm">Classes Cancelled / Holiday Declared</span>
+                    </td>
+                  </tr>
+                );
+              }
+
               return (
-                <tr key={day} className={`${isToday ? 'bg-indigo-50/30' : ''}`}>
-                  <td className="p-4 border border-gray-100 font-bold text-gray-700 text-center">
-                    {day}
-                    {isToday && <span className="block text-[10px] text-indigo-600 uppercase tracking-widest mt-1">Today</span>}
+                <tr key={dayObj.name} className={`${dayObj.isToday ? 'bg-indigo-50/30' : ''}`}>
+                  <td className="p-4 border border-gray-100 font-bold text-gray-700 text-center relative w-24">
+                    {dayObj.name}
+                    <span className="block text-[10px] font-bold text-indigo-400 mt-1">{dayObj.dateString}</span>
+                    {dayObj.isToday && <span className="block text-[10px] text-indigo-600 uppercase tracking-widest mt-1">Today</span>}
                   </td>
                   {Array.from({ length: maxPeriods }).map((_, i) => {
-                    const period = getPeriodData(day, i + 1);
+                    const period = getPeriodData(dailyConfigs, i + 1);
                     return (
                       <td key={i} className="p-2 border border-gray-100 h-24 align-top w-32 relative group hover:bg-gray-50 transition-colors">
-                        {period && period.subject ? (
-                          <div className="flex flex-col h-full bg-indigo-500 text-white p-2 rounded outline outline-1 outline-indigo-600 shadow-sm">
+                        {period && period.subject && !period.isHoliday ? (
+                          <div className={`flex flex-col h-full text-white p-2 rounded outline outline-1 shadow-sm ${period.isCancelled ? 'bg-rose-500 outline-rose-600' : 'bg-indigo-500 outline-indigo-600'}`}>
                             <div className="flex justify-between items-start mb-1">
-                              <span className="text-[10px] font-bold text-indigo-100 font-mono tracking-tighter">
-                                {period.startTime}
+                              <span className={`text-[10px] font-bold font-mono tracking-tighter ${period.isCancelled ? 'text-rose-100' : 'text-indigo-100'}`}>
+                                {period.startTime || 'Time N/A'}
                               </span>
-                              <span className="text-[10px] font-bold bg-white text-indigo-600 px-1 py-0.5 rounded leading-none">
+                              <span className={`text-[10px] font-bold bg-white px-1 py-0.5 rounded leading-none ${period.isCancelled ? 'text-rose-600' : 'text-indigo-600'}`}>
                                 {period.className}-{period.section}
                               </span>
                             </div>
-                            <span className="text-sm font-bold leading-tight mb-auto">
+                            <span className={`text-sm font-bold leading-tight mb-auto ${period.isCancelled ? 'line-through opacity-80' : ''}`}>
                               {period.subject}
                             </span>
-                            {period.room && (
+                            {period.isCancelled && <span className="text-[9px] uppercase tracking-wider font-bold text-rose-100 mt-1 mb-1">Cancelled</span>}
+                            {period.room && !period.isCancelled && (
                               <span className="absolute bottom-1 right-1 text-[9px] bg-white/20 text-indigo-50 px-1.5 py-0.5 rounded font-bold">
                                 Rm {period.room}
                               </span>

@@ -24,10 +24,39 @@ export default function StudentTimetable({ classLevel, section }) {
     }
   };
 
-  const getPeriodData = (day, periodNum) => {
-    const dayData = timetable.find(d => d.dayOfWeek === day);
-    if (!dayData) return null;
-    return dayData.periodInfo.find(p => p.periodNumber === periodNum);
+  const getDatesForCurrentWeek = () => {
+    const today = new Date();
+    // Get Monday of current week
+    const monday = new Date(today);
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+    monday.setDate(diff);
+
+    return days.map((dayName, index) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + index);
+      return {
+        name: dayName,
+        dateString: date.toISOString().split('T')[0],
+        isToday: date.toDateString() === today.toDateString()
+      };
+    });
+  };
+
+  const weekDays = getDatesForCurrentWeek();
+
+  // Merge Base Template with any exact Date Overrides
+  const getDailySchedule = (dayName, dateString) => {
+    const baseTemplate = timetable.find(d => d.dayOfWeek === dayName && d.isBaseTemplate);
+    const dateOverride = timetable.find(d => d.dateOverride === dateString);
+    
+    // If an override explicitly exists for this date, it fully replaces the base template
+    return dateOverride || baseTemplate || null;
+  };
+
+  const getPeriodData = (dailySchedule, periodNum) => {
+    if (!dailySchedule || !dailySchedule.periodInfo) return null;
+    return dailySchedule.periodInfo.find(p => p.periodNumber === periodNum);
   };
 
   const downloadPDF = async () => {
@@ -86,34 +115,54 @@ export default function StudentTimetable({ classLevel, section }) {
             </tr>
           </thead>
           <tbody>
-            {days.map(day => {
-              const rowHasData = timetable.some(t => t.dayOfWeek === day && t.periodInfo.length > 0);
-              const isToday = new Date().toLocaleDateString('en-US', { weekday: 'long' }) === day;
+            {weekDays.map(dayObj => {
+              const schedule = getDailySchedule(dayObj.name, dayObj.dateString);
               
+              if (schedule?.isHoliday) {
+                return (
+                  <tr key={dayObj.name} className={`${dayObj.isToday ? 'bg-rose-50/30' : 'bg-gray-50/10'}`}>
+                    <td className="p-4 border border-rose-100 font-bold text-rose-800 text-center relative z-10 w-24">
+                      {dayObj.name}
+                      <span className="block text-[10px] font-bold text-rose-500 mt-1">{dayObj.dateString}</span>
+                      {dayObj.isToday && <span className="block text-[10px] text-rose-600 uppercase tracking-widest mt-1">Today</span>}
+                    </td>
+                    <td colSpan={maxPeriods} className="bg-rose-50/50 p-6 text-center border border-rose-100">
+                      <span className="text-xl mr-2">🏖️</span>
+                      <span className="font-bold text-rose-700 tracking-wider uppercase text-sm">School Holiday Declared</span>
+                    </td>
+                  </tr>
+                );
+              }
+
               return (
-                <tr key={day} className={`${isToday ? 'bg-indigo-50/30' : ''}`}>
-                  <td className="p-4 border border-gray-100 font-bold text-gray-700 text-center">
-                    {day}
-                    {isToday && <span className="block text-[10px] text-indigo-600 uppercase tracking-widest mt-1">Today</span>}
+                <tr key={dayObj.name} className={`${dayObj.isToday ? 'bg-indigo-50/30' : ''}`}>
+                  <td className="p-4 border border-gray-100 font-bold text-gray-700 text-center w-24">
+                    {dayObj.name}
+                    <span className="block text-[10px] font-bold text-indigo-400 mt-1">{dayObj.dateString}</span>
+                    {dayObj.isToday && <span className="block text-[10px] text-indigo-600 uppercase tracking-widest mt-1">Today</span>}
                   </td>
                   {Array.from({ length: maxPeriods }).map((_, i) => {
-                    const period = getPeriodData(day, i + 1);
+                    const period = getPeriodData(schedule, i + 1);
+                    const isCancelled = period?.subject === 'Cancelled';
+                    
                     return (
                       <td key={i} className="p-2 border border-gray-100 h-24 align-top w-32 relative group hover:bg-gray-50 transition-colors">
-                        {period && period.subject ? (
-                          <div className="flex flex-col h-full bg-white p-2 rounded outline outline-1 outline-gray-200">
-                            <span className="text-[10px] font-bold text-gray-400 font-mono tracking-tighter mb-1">
-                              {period.startTime} - {period.endTime}
-                            </span>
-                            <span className="text-sm font-bold text-indigo-700 leading-tight mb-auto">
+                        {period && period.subject && period.subject !== 'Free Period' ? (
+                          <div className={`flex flex-col h-full bg-white p-2 rounded outline outline-1 ${isCancelled ? 'outline-rose-300 bg-rose-50' : 'outline-gray-200'}`}>
+                            {period.startTime && (
+                               <span className="text-[10px] font-bold text-gray-400 font-mono tracking-tighter mb-1">
+                                 {period.startTime} - {period.endTime}
+                               </span>
+                            )}
+                            <span className={`text-sm font-bold leading-tight mb-auto ${isCancelled ? 'text-rose-700 line-through' : 'text-indigo-700'}`}>
                               {period.subject}
                             </span>
                             {period.teacher && (
-                               <span className="text-[11px] font-medium text-gray-500 mt-2 truncate" title={period.teacher.name}>
-                                 {period.teacher.name.split(' ')[0]}
+                               <span className={`text-[11px] font-medium mt-2 truncate ${isCancelled ? 'text-rose-500/70' : 'text-gray-500'}`} title={period.teacher.name}>
+                                 {isCancelled ? 'Class Dismissed' : period.teacher.name.split(' ')[0]}
                                </span>
                             )}
-                            {period.room && (
+                            {period.room && !isCancelled && (
                               <span className="absolute bottom-1 right-1 text-[9px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 font-bold">
                                 {period.room}
                               </span>

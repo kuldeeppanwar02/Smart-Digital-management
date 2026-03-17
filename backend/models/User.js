@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema({
   subjects: [{ type: String }],
   teachingClasses: [{ type: String }], // Array of class levels e.g. ["10", "11"]
   teachingSections: [{ type: String }], // Array of sections mapped by index e.g. ["A", "B", "Group C"]
+  classTeacherOf: { type: String, default: null }, // Mapped as "ClassName-Section" e.g. "10-A"
   // Common
   dob: { type: Date },
   gender: { type: String, enum: ['Boy', 'Girl', 'Male', 'Female', 'Other'] }, // Supports different wording

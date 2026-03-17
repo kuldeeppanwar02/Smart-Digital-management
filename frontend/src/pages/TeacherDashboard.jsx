@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import TeacherTimetable from '../components/TeacherTimetable';
+import ClassTimetableBuilder from '../components/ClassTimetableBuilder';
 
 export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState('attendance');
@@ -215,6 +215,21 @@ export default function TeacherDashboard() {
                 {tab === 'query' ? 'Help / Query' : tab}
               </button>
             ))}
+
+            {/* Special Class Teacher Tab */}
+            {user.classTeacherOf && (
+              <button
+                onClick={() => setActiveTab('manage_class_timetable')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl capitalize font-medium transition-all duration-200 mt-4 border-t border-indigo-100 ${
+                  activeTab === 'manage_class_timetable' 
+                    ? 'bg-purple-50 text-purple-700 shadow-sm border-purple-200' 
+                    : 'text-indigo-600 hover:bg-indigo-50 border-transparent'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                Manage Class Timetable
+              </button>
+            )}
           </nav>
         </div>
         
@@ -237,9 +252,12 @@ export default function TeacherDashboard() {
       {/* Main Content */}
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 capitalize tracking-tight">{activeTab} Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900 capitalize tracking-tight">
+            {activeTab === 'manage_class_timetable' ? 'Manage Master Class Timetable' : `${activeTab} Management`}
+          </h1>
         </header>
 
+        {activeTab === 'manage_class_timetable' && <ClassTimetableBuilder classTeacherOf={user.classTeacherOf} />}
         {activeTab === 'timetable' && <TeacherTimetable />}
         
         {/* ATTENDANCE TAB */}

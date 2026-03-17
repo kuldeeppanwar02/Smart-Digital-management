@@ -48,7 +48,7 @@ const updateUser = async (req, res) => {
     const allowedUpdates = [
       'name', 'phone', 'rollNumber', 'className', 'section', 'medium', 
       'stream', 'thirdLanguage', 'optionalSubjects', 'subjects', 
-      'teachingClasses', 'teachingSections', 'dob', 'gender', 'fatherName'
+      'teachingClasses', 'teachingSections', 'classTeacherOf', 'dob', 'gender', 'fatherName'
     ];
     
     const updateData = {};

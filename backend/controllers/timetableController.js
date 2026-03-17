@@ -1,12 +1,56 @@
 const Timetable = require('../models/Timetable');
 
-// POST /api/timetable (Admin creates or updates a day's timetable)
+// POST /api/timetable (Admin creates or updates a day's timetable, or Class Teacher updates a specific period)
 const saveTimetable = async (req, res) => {
-  const { className, section, dayOfWeek, periodInfo } = req.body;
+  const { className, section, dayOfWeek, periodInfo, period, subject, room, isBaseTemplate, dateOverride, teacherId } = req.body;
   try {
+    // Determine if this is a single period update from Class Teacher Builder
+    if (period !== undefined && subject !== undefined) {
+      // Find the existing document for this day
+      let docQuery = { schoolId: req.user.schoolId, className, section, dayOfWeek, isBaseTemplate: isBaseTemplate !== undefined ? isBaseTemplate : true };
+      
+      if (dateOverride) {
+         docQuery.dateOverride = dateOverride;
+      } else {
+         docQuery.dateOverride = null;
+      }
+
+      let timetable = await Timetable.findOne(docQuery);
+      
+      if (!timetable) {
+         timetable = new Timetable({
+            ...docQuery,
+            periodInfo: []
+         });
+      }
+
+      // Handle "Free Period" or "Cancelled" clearing logic
+      if (subject === 'Free Period' || subject === 'Cancelled') {
+         // remove the period or mark it empty
+         timetable.periodInfo = timetable.periodInfo.filter(p => p.periodNumber !== period);
+         if (subject === 'Cancelled') {
+             timetable.periodInfo.push({ periodNumber: period, subject: 'Cancelled', teacher: null });
+         }
+      } else {
+         // Find if period exists and update it, else push
+         const existingIndex = timetable.periodInfo.findIndex(p => p.periodNumber === period);
+         const newPeriod = { periodNumber: period, subject, room: room || '', teacher: teacherId || null };
+         
+         if (existingIndex > -1) {
+            timetable.periodInfo[existingIndex] = newPeriod;
+         } else {
+            timetable.periodInfo.push(newPeriod);
+         }
+      }
+
+      await timetable.save();
+      return res.json({ message: 'Period updated', timetable });
+    }
+
+    // Default Admin Batch Save logic
     const timetable = await Timetable.findOneAndUpdate(
-      { schoolId: req.user.schoolId, className, section, dayOfWeek },
-      { schoolId: req.user.schoolId, className, section, dayOfWeek, periodInfo },
+      { schoolId: req.user.schoolId, className, section, dayOfWeek, isBaseTemplate: true, dateOverride: null },
+      { schoolId: req.user.schoolId, className, section, dayOfWeek, periodInfo, isBaseTemplate: true, dateOverride: null },
       { new: true, upsert: true }
     );
     res.json({ message: 'Timetable saved', timetable });
@@ -17,11 +61,17 @@ const saveTimetable = async (req, res) => {
 
 // GET /api/timetable/class?className=10&section=A
 const getClassTimetable = async (req, res) => {
-  const { className, section } = req.query;
+  const { className, section, dateOverride } = req.query;
   try {
-    const timetables = await Timetable.find({ schoolId: req.user.schoolId, className, section })
+    const query = { schoolId: req.user.schoolId, className, section };
+    
+    // If a specific date is requested, we can optionally fetch the overrides for that date
+    // For now, the endpoint returns all base templates AND overrides, and the frontend merges them
+    
+    const timetables = await Timetable.find(query)
       .populate('periodInfo.teacher', 'name')
       .sort({ dayOfWeek: 1 });
+      
     res.json(timetables);
   } catch (err) {
     res.status(500).json({ message: err.message });
