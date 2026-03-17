@@ -7,6 +7,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [school, setSchool] = useState(null);
   const [activeModule, setActiveModule] = useState('users'); // users or fees
+  const [activeTab, setActiveTab] = useState('student');
   const [searchTerm, setSearchTerm] = useState('');
   const [approvalModal, setApprovalModal] = useState({ isOpen: false, user: null, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' });
   const [editModal, setEditModal] = useState({ isOpen: false, user: null, formData: {} });
