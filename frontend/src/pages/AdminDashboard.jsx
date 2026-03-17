@@ -185,12 +185,14 @@ const AdminDashboard = () => {
 
         {/* Approval Modal */}
         {approvalModal.isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Assign {approvalModal.user?.role === 'teacher' ? 'Teacher' : 'Student'} Details</h3>
-              <p className="text-sm text-gray-500 mb-6">Enter allocation details to finalize {approvalModal.user?.name}'s approval.</p>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4 mt-12 md:mt-0">
+            <div className="bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl border border-gray-100 max-h-[90vh] flex flex-col">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Assign {approvalModal.user?.role === 'teacher' ? 'Teacher' : 'Student'} Details</h3>
+                <p className="text-sm text-gray-500 mb-4">Enter allocation details to finalize {approvalModal.user?.name}'s approval.</p>
+              </div>
               
-              <div className="space-y-4">
+              <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-1 mb-4">
                 {approvalModal.user?.role === 'student' && (
                   <>
                     <div className="grid grid-cols-2 gap-4">
@@ -313,7 +315,8 @@ const AdminDashboard = () => {
                   </div>
                 )}
               </div>
-              <div className="mt-8 flex gap-3">
+              
+              <div className="flex gap-4 pt-4 mt-auto border-t border-gray-100">
                 <button 
                   onClick={() => setApprovalModal({ isOpen: false, user: null, rollNumber: '', className: '', section: '', subjects: [], teachingClasses: [], teachingSections: [] })}
                   className="flex-1 py-2.5 rounded-xl font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
@@ -343,15 +346,18 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Edit Modal (Omitted for brevity, assuming same code blocks apply) ... */}
+        {/* Edit Modal (Omitted for brevity, assuming same code blocks apply) */}
+        {/* Edit User Modal */}
         {editModal.isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-gray-100 my-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Edit {editModal.user?.role.toUpperCase()} Profile</h3>
-              <p className="text-sm text-gray-500 mb-6">Update demographic or academic details for {editModal.user?.name}.</p>
-              
-              <form onSubmit={submitEdit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4 mt-12 md:mt-0">
+            <div className="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl border border-gray-100 max-h-[90vh] flex flex-col">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Edit Profile & Settings</h3>
+                <p className="text-sm text-gray-500 mb-4">Update details for {editModal.user?.name}</p>
+              </div>
+
+              <form onSubmit={submitEdit} className="flex flex-col flex-1 overflow-hidden">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 custom-scrollbar mb-4">
                   <div className="col-span-2">
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Full Name</label>
                     <input type="text" name="name" value={editModal.formData.name} onChange={handleEditChange} required className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
@@ -508,7 +514,7 @@ const AdminDashboard = () => {
                   )}
                 </div>
                 
-                <div className="mt-8 flex gap-3 pt-4">
+                <div className="flex gap-4 pt-4 mt-auto border-t border-gray-100">
                   <button 
                     type="button"
                     onClick={() => setEditModal({ isOpen: false, user: null, formData: {} })}
