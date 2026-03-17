@@ -194,25 +194,15 @@ const UserRegistration = () => {
 
           {/* TEACHER SPECIFIC */}
           {role === 'teacher' && (
-            <>
-              <h3 className="font-bold text-gray-800 border-b pb-2 mt-6">Allocation Details</h3>
-              <div className="space-y-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
-                <div>
-                  <label className="block text-xs font-bold text-indigo-700 mb-1">Teaching Subjects (Comma separated)</label>
-                  <input type="text" name="subjects" className="px-4 py-2 border rounded-xl w-full" placeholder="e.g. Mathematics, Science" value={formData.subjects} onChange={handleChange} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                   <div>
-                     <label className="block text-xs font-bold text-indigo-700 mb-1">Assigned Classes</label>
-                     <input type="text" name="teachingClasses" className="px-4 py-2 border rounded-xl w-full" placeholder="e.g. 10, 11" value={formData.teachingClasses} onChange={handleChange} />
-                   </div>
-                   <div>
-                     <label className="block text-xs font-bold text-indigo-700 mb-1">Assigned Sections</label>
-                     <input type="text" name="teachingSections" className="px-4 py-2 border rounded-xl w-full" placeholder="e.g. A, B, Group 1" value={formData.teachingSections} onChange={handleChange} />
-                   </div>
-                </div>
-              </div>
-            </>
+             <div className="mt-6 p-4 bg-indigo-50 rounded-xl text-indigo-800 text-sm font-medium border border-indigo-100 flex items-start gap-3">
+               <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+               </svg>
+               <p>
+                 <span className="font-bold block mb-1">Registration Note:</span> 
+                 Your specific teaching subjects, classes, and sections will be securely assigned by the School Administrator when your account is approved.
+               </p>
+             </div>
           )}
 
           <button type="submit" disabled={!schoolId || success} className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-colors mt-6">

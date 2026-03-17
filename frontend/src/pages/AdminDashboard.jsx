@@ -7,9 +7,8 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [school, setSchool] = useState(null);
   const [activeModule, setActiveModule] = useState('users'); // users or fees
-  const [activeTab, setActiveTab] = useState('student');
   const [searchTerm, setSearchTerm] = useState('');
-  const [approvalModal, setApprovalModal] = useState({ isOpen: false, user: null, rollNumber: '', className: '', section: '' });
+  const [approvalModal, setApprovalModal] = useState({ isOpen: false, user: null, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' });
   const [editModal, setEditModal] = useState({ isOpen: false, user: null, formData: {} });
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -41,7 +40,9 @@ const AdminDashboard = () => {
 
   const handleApproveClick = (u) => {
     if (u.role === 'student') {
-      setApprovalModal({ isOpen: true, user: u, rollNumber: '', className: '', section: '' });
+      setApprovalModal({ isOpen: true, user: u, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' });
+    } else if (u.role === 'teacher') {
+      setApprovalModal({ isOpen: true, user: u, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' });
     } else {
       approveUser(u._id, {});
     }
@@ -50,7 +51,7 @@ const AdminDashboard = () => {
   const approveUser = async (id, payload = {}) => {
     try {
       await api.patch(`/admin/users/${id}/approve`, payload);
-      setApprovalModal({ isOpen: false, user: null, rollNumber: '', className: '', section: '' });
+      setApprovalModal({ isOpen: false, user: null, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' });
       fetchUsers();
     } catch (err) {
       alert('Failed to approve');
@@ -160,53 +161,102 @@ const AdminDashboard = () => {
         {approvalModal.isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4">
             <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Assign Student Details</h3>
-              <p className="text-sm text-gray-500 mb-6">Enter class and roll number to finalize {approvalModal.user?.name}'s approval.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Assign {approvalModal.user?.role === 'teacher' ? 'Teacher' : 'Student'} Details</h3>
+              <p className="text-sm text-gray-500 mb-6">Enter allocation details to finalize {approvalModal.user?.name}'s approval.</p>
               
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Class Level</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. 10"
-                      value={approvalModal.className}
-                      onChange={(e) => setApprovalModal({...approvalModal, className: e.target.value})}
-                      className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Section</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. A"
-                      value={approvalModal.section}
-                      onChange={(e) => setApprovalModal({...approvalModal, section: e.target.value})}
-                      className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Roll Number</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. 104"
-                    value={approvalModal.rollNumber}
-                    onChange={(e) => setApprovalModal({...approvalModal, rollNumber: e.target.value})}
-                    className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
-                  />
-                </div>
+                {approvalModal.user?.role === 'student' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Class Level</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g. 10"
+                          value={approvalModal.className}
+                          onChange={(e) => setApprovalModal({...approvalModal, className: e.target.value})}
+                          className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Section</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g. A"
+                          value={approvalModal.section}
+                          onChange={(e) => setApprovalModal({...approvalModal, section: e.target.value})}
+                          className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Roll Number</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. 104"
+                        value={approvalModal.rollNumber}
+                        onChange={(e) => setApprovalModal({...approvalModal, rollNumber: e.target.value})}
+                        className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
+                      />
+                    </div>
+                  </>
+                )}
+                {approvalModal.user?.role === 'teacher' && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Subjects (Comma separated)</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Math, Science"
+                        value={approvalModal.subjects}
+                        onChange={(e) => setApprovalModal({...approvalModal, subjects: e.target.value})}
+                        className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Teaching Classes</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. 10, 11"
+                        value={approvalModal.teachingClasses}
+                        onChange={(e) => setApprovalModal({...approvalModal, teachingClasses: e.target.value})}
+                        className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Teaching Sections</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. A, B"
+                        value={approvalModal.teachingSections}
+                        onChange={(e) => setApprovalModal({...approvalModal, teachingSections: e.target.value})}
+                        className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
-              
               <div className="mt-8 flex gap-3">
                 <button 
-                  onClick={() => setApprovalModal({ isOpen: false, user: null, rollNumber: '', className: '' })}
+                  onClick={() => setApprovalModal({ isOpen: false, user: null, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' })}
                   className="flex-1 py-2.5 rounded-xl font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
-                  onClick={() => approveUser(approvalModal.user._id, { rollNumber: approvalModal.rollNumber, className: approvalModal.className })}
+                  onClick={() => {
+                    let payload = {};
+                    if (approvalModal.user.role === 'student') {
+                      payload = { rollNumber: approvalModal.rollNumber, className: approvalModal.className, section: approvalModal.section };
+                    } else if (approvalModal.user.role === 'teacher') {
+                      payload = {
+                        subjects: approvalModal.subjects ? approvalModal.subjects.split(',').map(s=>s.trim()).filter(Boolean) : [],
+                        teachingClasses: approvalModal.teachingClasses ? approvalModal.teachingClasses.split(',').map(s=>s.trim()).filter(Boolean) : [],
+                        teachingSections: approvalModal.teachingSections ? approvalModal.teachingSections.split(',').map(s=>s.trim()).filter(Boolean) : []
+                      };
+                    }
+                    approveUser(approvalModal.user._id, payload);
+                  }}
                   className="flex-1 py-2.5 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg hover:shadow-blue-500/25 active:scale-[0.98] transition-all"
                 >
                   Confirm
