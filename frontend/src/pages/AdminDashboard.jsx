@@ -9,7 +9,7 @@ const AdminDashboard = () => {
   const [activeModule, setActiveModule] = useState('users'); // users or fees
   const [activeTab, setActiveTab] = useState('student');
   const [searchTerm, setSearchTerm] = useState('');
-  const [approvalModal, setApprovalModal] = useState({ isOpen: false, user: null, rollNumber: '', className: '' });
+  const [approvalModal, setApprovalModal] = useState({ isOpen: false, user: null, rollNumber: '', className: '', section: '' });
   const [editModal, setEditModal] = useState({ isOpen: false, user: null, formData: {} });
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -41,7 +41,7 @@ const AdminDashboard = () => {
 
   const handleApproveClick = (u) => {
     if (u.role === 'student') {
-      setApprovalModal({ isOpen: true, user: u, rollNumber: '', className: '' });
+      setApprovalModal({ isOpen: true, user: u, rollNumber: '', className: '', section: '' });
     } else {
       approveUser(u._id, {});
     }
@@ -50,7 +50,7 @@ const AdminDashboard = () => {
   const approveUser = async (id, payload = {}) => {
     try {
       await api.patch(`/admin/users/${id}/approve`, payload);
-      setApprovalModal({ isOpen: false, user: null, rollNumber: '', className: '' });
+      setApprovalModal({ isOpen: false, user: null, rollNumber: '', className: '', section: '' });
       fetchUsers();
     } catch (err) {
       alert('Failed to approve');
@@ -78,11 +78,15 @@ const AdminDashboard = () => {
         gender: u.gender || '',
         fatherName: u.fatherName || '',
         className: u.className || '',
+        section: u.section || '',
         rollNumber: u.rollNumber || '',
         medium: u.medium || '',
+        thirdLanguage: u.thirdLanguage || '',
         stream: u.stream || '',
+        optionalSubjects: u.optionalSubjects ? u.optionalSubjects.join(', ') : '',
         subjects: u.subjects ? u.subjects.join(', ') : '', 
-        teachingClasses: u.teachingClasses ? u.teachingClasses.join(', ') : ''
+        teachingClasses: u.teachingClasses ? u.teachingClasses.join(', ') : '',
+        teachingSections: u.teachingSections ? u.teachingSections.join(', ') : ''
       }
     });
   };
@@ -101,6 +105,9 @@ const AdminDashboard = () => {
       if (editModal.user.role === 'teacher') {
         payload.subjects = payload.subjects.split(',').map(s => s.trim()).filter(Boolean);
         payload.teachingClasses = payload.teachingClasses.split(',').map(s => s.trim()).filter(Boolean);
+        if (payload.teachingSections) payload.teachingSections = payload.teachingSections.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (editModal.user.role === 'student' && typeof payload.optionalSubjects === 'string') {
+        payload.optionalSubjects = payload.optionalSubjects.split(',').map(s => s.trim()).filter(Boolean);
       }
       await api.patch(`/admin/users/${editModal.user._id}`, payload);
       setEditModal({ isOpen: false, user: null, formData: {} });
@@ -157,15 +164,27 @@ const AdminDashboard = () => {
               <p className="text-sm text-gray-500 mb-6">Enter class and roll number to finalize {approvalModal.user?.name}'s approval.</p>
               
               <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Class Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. 10-A"
-                    value={approvalModal.className}
-                    onChange={(e) => setApprovalModal({...approvalModal, className: e.target.value})}
-                    className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Class Level</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. 10"
+                      value={approvalModal.className}
+                      onChange={(e) => setApprovalModal({...approvalModal, className: e.target.value})}
+                      className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Section</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. A"
+                      value={approvalModal.section}
+                      onChange={(e) => setApprovalModal({...approvalModal, section: e.target.value})}
+                      className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Roll Number</label>
@@ -239,13 +258,16 @@ const AdminDashboard = () => {
                         <input type="text" name="className" value={editModal.formData.className} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
                       </div>
                       <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Section</label>
+                        <input type="text" name="section" value={editModal.formData.section} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
+                      </div>
+                      <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Roll Number</label>
                         <input type="text" name="rollNumber" value={editModal.formData.rollNumber} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Medium</label>
                         <select name="medium" value={editModal.formData.medium} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800">
-                          <option value="">None</option>
                           <option value="English">English</option>
                           <option value="Hindi">Hindi</option>
                           <option value="Other">Other</option>
@@ -255,10 +277,19 @@ const AdminDashboard = () => {
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Stream</label>
                         <select name="stream" value={editModal.formData.stream} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800">
                           <option value="None">None</option>
-                          <option value="Science">Science</option>
+                          <option value="Science PCM">Science PCM</option>
+                          <option value="Science PCB">Science PCB</option>
                           <option value="Commerce">Commerce</option>
                           <option value="Arts">Arts</option>
                         </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Third Lang</label>
+                        <input type="text" name="thirdLanguage" value={editModal.formData.thirdLanguage} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Optional Subjects (Comma separated)</label>
+                        <input type="text" name="optionalSubjects" value={editModal.formData.optionalSubjects} onChange={handleEditChange} className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
                       </div>
                     </>
                   )}
@@ -269,9 +300,13 @@ const AdminDashboard = () => {
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Subjects (Comma separated)</label>
                         <input type="text" name="subjects" value={editModal.formData.subjects} onChange={handleEditChange} placeholder="Maths, Science" className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
                       </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Teaching Classes (Comma separated)</label>
-                        <input type="text" name="teachingClasses" value={editModal.formData.teachingClasses} onChange={handleEditChange} placeholder="10-A, 11-B" className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Teaching Classes</label>
+                        <input type="text" name="teachingClasses" value={editModal.formData.teachingClasses} onChange={handleEditChange} placeholder="10, 11" className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Teaching Sections</label>
+                        <input type="text" name="teachingSections" value={editModal.formData.teachingSections} onChange={handleEditChange} placeholder="A, B" className="w-full bg-gray-50 border border-gray-200 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800" />
                       </div>
                     </>
                   )}
@@ -450,17 +485,20 @@ const AdminDashboard = () => {
                       <td className="p-4">
                         <div className="flex flex-col gap-1 items-start">
                           {u.role === 'student' && (
-                            <>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">Class: {u.className || 'Pending'}</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">Class {u.className || 'Pending'} {u.section ? `- ${u.section}` : ''}</span>
                               {u.rollNumber && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200">Roll: {u.rollNumber}</span>}
                               {u.stream && u.stream !== 'None' && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">{u.stream}</span>}
-                            </>
+                              {u.thirdLanguage && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">Lang: {u.thirdLanguage}</span>}
+                              {u.optionalSubjects?.length > 0 && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-pink-50 text-pink-700 border border-pink-100">+{u.optionalSubjects.length} Opt</span>}
+                            </div>
                           )}
                           {u.role === 'teacher' && (
-                            <>
-                              <span className="text-xs font-semibold text-gray-600">Subjects: <span className="text-gray-900">{u.subjects?.join(', ') || 'N/A'}</span></span>
-                              <span className="text-xs font-semibold text-gray-600">Classes: <span className="text-gray-900">{u.teachingClasses?.join(', ') || 'N/A'}</span></span>
-                            </>
+                            <div className="mt-1 space-y-0.5">
+                              <div className="text-xs font-semibold text-gray-600">Subjects: <span className="text-gray-900">{u.subjects?.join(', ') || 'N/A'}</span></div>
+                              <div className="text-xs font-semibold text-gray-600">Classes: <span className="text-gray-900">{u.teachingClasses?.join(', ') || 'N/A'}</span></div>
+                              <div className="text-xs font-semibold text-gray-600">Sections: <span className="text-gray-900">{u.teachingSections?.join(', ') || 'N/A'}</span></div>
+                            </div>
                           )}
                           {u.role === 'parent' && (
                              <span className="text-xs font-semibold text-gray-600">Linked Kids: <span className="text-gray-900">{u.linkedChildren?.length || 0}</span></span>
