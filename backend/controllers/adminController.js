@@ -28,10 +28,11 @@ const createUser = async (req, res) => {
 // PATCH /api/admin/users/:id/approve  - Approve a pending user
 const approveUser = async (req, res) => {
   try {
-    const { rollNumber, className } = req.body;
+    const { rollNumber, className, section } = req.body;
     const updatePayload = { isApproved: true };
     if (rollNumber) updatePayload.rollNumber = rollNumber;
     if (className) updatePayload.className = className;
+    if (section) updatePayload.section = section;
 
     const user = await User.findByIdAndUpdate(req.params.id, updatePayload, { new: true }).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
@@ -45,8 +46,9 @@ const approveUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const allowedUpdates = [
-      'name', 'phone', 'rollNumber', 'className', 'medium', 
-      'stream', 'subjects', 'teachingClasses', 'dob', 'gender', 'fatherName'
+      'name', 'phone', 'rollNumber', 'className', 'section', 'medium', 
+      'stream', 'thirdLanguage', 'optionalSubjects', 'subjects', 
+      'teachingClasses', 'teachingSections', 'dob', 'gender', 'fatherName'
     ];
     
     const updateData = {};

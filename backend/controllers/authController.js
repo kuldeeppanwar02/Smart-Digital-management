@@ -7,8 +7,9 @@ const generateToken = (id) =>
 // POST /api/auth/register
 const register = async (req, res) => {
   const { 
-    name, email, password, role, schoolId, rollNumber, className, 
-    subjects, phone, dob, gender, fatherName, medium, stream, teachingClasses 
+    name, email, password, role, schoolId, rollNumber, className, section,
+    subjects, phone, dob, gender, fatherName, medium, stream, teachingClasses, teachingSections,
+    thirdLanguage, optionalSubjects
   } = req.body;
   try {
     const existing = await User.findOne({ email });
@@ -28,14 +29,18 @@ const register = async (req, res) => {
       name, email, password, role,
       rollNumber: rollNumber || '',
       className: className || '',
+      section: section || '',
       subjects: subjects || [],
       teachingClasses: teachingClasses || [],
+      teachingSections: teachingSections || [],
       phone: phone || '',
       dob: dob || null,
       gender: gender || 'Other',
       fatherName: fatherName || '',
       medium: medium || 'English',
+      thirdLanguage: thirdLanguage || '',
       stream: stream || 'None',
+      optionalSubjects: optionalSubjects || [],
       isApproved: false, // admin approves all
     });
 

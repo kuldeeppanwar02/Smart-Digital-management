@@ -4,6 +4,7 @@ const examSchema = new mongoose.Schema({
   schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', required: true },
   subject: { type: String, required: true },
   className: { type: String, required: true },
+  section: { type: String, default: '' },
   date: { type: Date, required: true },
   startTime: { type: String, required: true },
   duration: { type: String, required: true }, // e.g., "2 hours"

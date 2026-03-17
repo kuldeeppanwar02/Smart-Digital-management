@@ -10,11 +10,12 @@ const createExam = async (req, res) => {
   }
 };
 
-// GET /api/exams?className=10-A  (Get exams for a class)
+// GET /api/exams?className=10&section=A  (Get exams for a class/section)
 const getExams = async (req, res) => {
   try {
     const filter = { schoolId: req.user.schoolId };
     if (req.query.className) filter.className = req.query.className;
+    if (req.query.section) filter.section = req.query.section;
     const exams = await Exam.find(filter)
       .populate('createdBy', 'name')
       .sort({ date: 1 });

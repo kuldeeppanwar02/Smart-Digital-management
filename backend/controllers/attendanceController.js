@@ -3,7 +3,7 @@ const User = require('../models/User');
 
 // POST /api/attendance/mark  (Teacher marks attendance for a class)
 const markAttendance = async (req, res) => {
-  const { className, subject, date, records } = req.body;
+  const { className, section, subject, date, records } = req.body;
   // records = [{ studentId, status }]
   try {
     const ops = records.map(({ studentId, status }) => ({
@@ -15,6 +15,7 @@ const markAttendance = async (req, res) => {
             student: studentId,
             teacher: req.user._id,
             className,
+            section: section || '',
             subject,
             date: new Date(date),
             status,
@@ -30,11 +31,12 @@ const markAttendance = async (req, res) => {
   }
 };
 
-// GET /api/attendance/class?className=10-A&subject=Math&date=2026-03-16
+// GET /api/attendance/class?className=10&section=A&subject=Math&date=2026-03-16
 const getClassAttendance = async (req, res) => {
-  const { className, subject, date } = req.query;
+  const { className, section, subject, date } = req.query;
   try {
     const filter = { schoolId: req.user.schoolId, className };
+    if (section) filter.section = section;
     if (subject) filter.subject = subject;
     if (date) filter.date = new Date(date);
 

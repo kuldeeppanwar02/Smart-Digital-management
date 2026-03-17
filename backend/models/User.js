@@ -13,12 +13,16 @@ const userSchema = new mongoose.Schema({
   },
   // Student-specific
   rollNumber: { type: String },
-  className: { type: String }, // e.g. "10-A"
+  className: { type: String }, // e.g. "10", "11"
+  section: { type: String }, // e.g. "A", "Group B"
   medium: { type: String, enum: ['English', 'Hindi', 'Other'] },
-  stream: { type: String, enum: ['Science', 'Commerce', 'Arts', 'None'] }, // for 11/12th
+  thirdLanguage: { type: String }, // For 6th-8th (Sanskrit/Urdu/French etc)
+  stream: { type: String, enum: ['Science PCM', 'Science PCB', 'Science', 'Commerce', 'Arts', 'None'] }, // for 11/12th
+  optionalSubjects: [{ type: String }], // Array of strings (e.g. PCM subjects, Commerce optional subjects)
   // Teacher-specific
   subjects: [{ type: String }],
-  teachingClasses: [{ type: String }],
+  teachingClasses: [{ type: String }], // Array of class levels e.g. ["10", "11"]
+  teachingSections: [{ type: String }], // Array of sections mapped by index e.g. ["A", "B", "Group C"]
   // Common
   dob: { type: Date },
   gender: { type: String, enum: ['Boy', 'Girl', 'Male', 'Female', 'Other'] }, // Supports different wording
