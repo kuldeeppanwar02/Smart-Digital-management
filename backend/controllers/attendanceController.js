@@ -4,7 +4,17 @@ const User = require('../models/User');
 // POST /api/attendance/mark  (Teacher marks attendance for a class)
 const markAttendance = async (req, res) => {
   const { className, section, subject, date, records } = req.body;
-  // records = [{ studentId, status }]
+  
+  if (req.user.role === 'teacher') {
+    const hasClass = req.user.teachingClasses?.includes(className);
+    const hasSection = req.user.teachingSections?.includes(`${className}-${section}`);
+    const hasSubject = req.user.subjects?.includes(subject);
+
+    if (!hasClass || !hasSection || !hasSubject) {
+      return res.status(403).json({ message: 'Not authorized to mark attendance for this specific class, section, or subject.' });
+    }
+  }
+
   try {
     const ops = records.map(({ studentId, status }) => ({
       updateOne: {

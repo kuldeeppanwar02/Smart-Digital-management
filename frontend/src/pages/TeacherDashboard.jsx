@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import TeacherTimetable from '../components/TeacherTimetable';
 
 export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState('attendance');
@@ -26,8 +27,8 @@ export default function TeacherDashboard() {
   const [selectedExamId, setSelectedExamId] = useState('');
   const [marksRecords, setMarksRecords] = useState({});
 
-  // Tuition State
-  const [tuitionRequests, setTuitionRequests] = useState([]);
+  // Query State
+  const [queries, setQueries] = useState([]);
 
   const navigate = useNavigate();
 
@@ -40,7 +41,7 @@ export default function TeacherDashboard() {
     if (activeTab === 'attendance') fetchStudents(className, section);
     else if (activeTab === 'exams') fetchExams();
     else if (activeTab === 'marks') { fetchExams(); /* students fetched when exam selected */ }
-    else if (activeTab === 'tuition') fetchTuitionRequests();
+    else if (activeTab === 'query') fetchQueries();
   }, [activeTab]);
 
   useEffect(() => {
@@ -162,19 +163,19 @@ export default function TeacherDashboard() {
     }
   };
 
-  // ---- TUITION LOGIC ----
-  const fetchTuitionRequests = async () => {
+  // ---- QUERY LOGIC ----
+  const fetchQueries = async () => {
     try {
-      const { data } = await api.get('/tuition/teacher');
-      setTuitionRequests(data);
+      const { data } = await api.get('/queries/teacher');
+      setQueries(data);
     } catch(err) { console.error(err); }
   };
-  const handleTuitionResponse = async (id, status) => {
+  const handleQueryResponse = async (id, status) => {
     const reply = prompt(`Enter reply for the student (optional):`);
     try {
-      await api.put(`/tuition/${id}/respond`, { status, teacherReply: reply });
-      fetchTuitionRequests();
-    } catch(err) { alert('Error responding to request'); }
+      await api.put(`/queries/${id}/respond`, { status, teacherReply: reply });
+      fetchQueries();
+    } catch(err) { alert('Error responding to query'); }
   };
 
   return (
@@ -196,7 +197,7 @@ export default function TeacherDashboard() {
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
           <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-2">Modules</p>
           <nav className="space-y-1">
-            {['attendance', 'exams', 'marks', 'tuition'].map((tab) => (
+            {['attendance', 'timetable', 'exams', 'marks', 'query'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -206,12 +207,12 @@ export default function TeacherDashboard() {
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-transparent'
                 }`}
               >
-                {/* Icons based on tab */}
                 {tab === 'attendance' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                {tab === 'timetable' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                 {tab === 'exams' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
                 {tab === 'marks' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>}
-                {tab === 'tuition' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>}
-                {tab}
+                {tab === 'query' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                {tab === 'query' ? 'Help / Query' : tab}
               </button>
             ))}
           </nav>
@@ -238,6 +239,8 @@ export default function TeacherDashboard() {
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 capitalize tracking-tight">{activeTab} Management</h1>
         </header>
+
+        {activeTab === 'timetable' && <TeacherTimetable />}
         
         {/* ATTENDANCE TAB */}
         {activeTab === 'attendance' && (
@@ -401,43 +404,46 @@ export default function TeacherDashboard() {
           </div>
         )}
 
-        {/* TUITION TAB */}
-        {activeTab === 'tuition' && (
+        {/* QUERY TAB */}
+        {activeTab === 'query' && (
           <div className="space-y-6">
              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                <h3 className="text-xl font-bold mb-1">Tuition Requests</h3>
-                <p className="text-gray-500 mb-4">Manage private tutoring requests from students and parents.</p>
+                <h3 className="text-xl font-bold mb-1">Student Queries</h3>
+                <p className="text-gray-500 mb-4">Manage help queries and concerns from students assigned to your class.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   {tuitionRequests.map(req => (
+                   {queries.map(req => (
                      <div key={req._id} className="border border-indigo-100 rounded-xl p-5 shadow-sm relative hover:border-indigo-300 transition-colors">
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-bold text-lg">{req.student?.name}</h4>
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
-                            ${req.status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                              req.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                          <div>
+                            <h4 className="font-bold text-lg text-gray-900">{req.student?.name}</h4>
+                            <span className="text-xs font-medium text-gray-500">
+                              Class {req.student?.className}-{req.student?.section} • Roll {req.student?.rollNumber}
+                            </span>
+                          </div>
+                          <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide border
+                            ${req.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                              'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
                             {req.status}
                           </span>
                         </div>
-                        <ul className="text-sm text-gray-600 space-y-1 mb-4">
-                          <li><strong>Class:</strong> {req.student?.className}</li>
-                          <li><strong>Subject needed:</strong> {req.subject}</li>
-                          <li><strong>Preferred time:</strong> {req.preferredTime || 'Anytime'}</li>
-                          {req.message && <li className="mt-2 text-gray-800 italic border-l-2 border-indigo-200 pl-2">"{req.message}"</li>}
-                        </ul>
+                        <div className="text-sm text-gray-700 space-y-2 mb-4 mt-3">
+                          <p><strong>Subject Area:</strong> {req.subject}</p>
+                          {req.message && <p className="mt-2 text-gray-800 italic border-l-2 border-indigo-200 pl-2">"{req.message}"</p>}
+                        </div>
                         {req.status === 'pending' && (
                           <div className="flex gap-2 border-t pt-3 border-gray-100">
-                             <button onClick={() => handleTuitionResponse(req._id, 'accepted')} className="flex-1 bg-emerald-500 text-white rounded-lg py-1.5 text-sm hover:bg-emerald-600">Accept</button>
-                             <button onClick={() => handleTuitionResponse(req._id, 'rejected')} className="flex-1 bg-red-50 text-red-600 border border-red-200 rounded-lg py-1.5 text-sm hover:bg-red-100">Reject</button>
+                             <button onClick={() => handleQueryResponse(req._id, 'resolved')} className="flex-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg py-1.5 text-sm font-semibold hover:bg-emerald-100 transition-colors">Mark Resolved & Reply</button>
                           </div>
                         )}
                         {req.teacherReply && (
-                          <div className="mt-3 text-sm bg-gray-50 p-2 rounded text-indigo-900 border border-gray-200">
-                            <strong>Your Reply:</strong> {req.teacherReply}
+                          <div className="mt-3 text-sm bg-indigo-50/50 p-2.5 rounded-lg text-indigo-900 border border-indigo-100">
+                            <strong className="block text-xs uppercase text-indigo-500 tracking-wider mb-1">Your Reply</strong> 
+                            {req.teacherReply}
                           </div>
                         )}
                      </div>
                    ))}
-                   {tuitionRequests.length === 0 && <p className="text-gray-500">No tuition requests pending or confirmed yet.</p>}
+                   {queries.length === 0 && <p className="text-gray-500 text-sm font-medium">No queries have been submitted to you recently.</p>}
                 </div>
              </div>
           </div>

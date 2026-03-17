@@ -22,9 +22,10 @@ app.use('/api/schools', require('./routes/schoolRoutes'));
 app.use('/api/attendance', require('./routes/attendance'));
 app.use('/api/exams', require('./routes/exams'));
 app.use('/api/marks', require('./routes/marks'));
-app.use('/api/tuition', require('./routes/tuition'));
+app.use('/api/queries', require('./routes/queryRoutes'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/parent', require('./routes/parentRoutes'));
+app.use('/api/timetable', require('./routes/timetable'));
 app.use('/api/fees', require('./routes/feeRoutes'));
 
 // Health check

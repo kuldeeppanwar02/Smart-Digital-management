@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import AdminFees from '../components/AdminFees';
+import AdminTimetable from '../components/AdminTimetable';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -591,18 +592,24 @@ const AdminDashboard = () => {
         )}
 
         {/* Master Active Module Navigation */}
-        <div className="flex gap-4 mb-6 mt-2 ml-2">
+        <div className="flex gap-4 mb-6 mt-2 ml-2 overflow-x-auto pb-2 custom-scrollbar">
           <button 
              onClick={() => setActiveModule('users')}
-             className={`px-5 py-2.5 rounded-2xl font-bold transition-all ${activeModule === 'users' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+             className={`px-5 py-2.5 rounded-2xl font-bold transition-all whitespace-nowrap ${activeModule === 'users' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
           >
              Users Matrix
           </button>
           <button 
              onClick={() => setActiveModule('fees')}
-             className={`px-5 py-2.5 rounded-2xl font-bold transition-all ${activeModule === 'fees' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+             className={`px-5 py-2.5 rounded-2xl font-bold transition-all whitespace-nowrap ${activeModule === 'fees' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
           >
              Fees & Commerce
+          </button>
+          <button 
+             onClick={() => setActiveModule('timetable')}
+             className={`px-5 py-2.5 rounded-2xl font-bold transition-all whitespace-nowrap ${activeModule === 'timetable' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+          >
+             Timetable Planner
           </button>
         </div>
 
@@ -663,6 +670,8 @@ const AdminDashboard = () => {
 
           {activeModule === 'fees' ? (
              <AdminFees />
+          ) : activeModule === 'timetable' ? (
+             <AdminTimetable />
           ) : (
             <>
             <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl shadow-blue-900/5 border border-white p-8">
