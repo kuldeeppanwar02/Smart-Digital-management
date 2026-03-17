@@ -25,7 +25,6 @@ export default function TeacherDashboard() {
   // Tuition State
   const [tuitionRequests, setTuitionRequests] = useState([]);
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
   const navigate = useNavigate();
 
   const logout = () => {
