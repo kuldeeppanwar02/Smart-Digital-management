@@ -9,14 +9,15 @@ export default function TeacherDashboard() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   // Attendance State
-  const [className, setClassName] = useState(user.teachingClasses?.[0] || '10-A');
+  const [className, setClassName] = useState(user.teachingClasses?.[0] || '10');
+  const [section, setSection] = useState(user.teachingSections?.[0] || 'A');
   const [subject, setSubject] = useState(user.subjects?.[0] || 'Math');
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceRecords, setAttendanceRecords] = useState({});
 
   // Exams State
   const [exams, setExams] = useState([]);
-  const [examForm, setExamForm] = useState({ subject: '', className: '', date: '', startTime: '', duration: '', room: '', totalMarks: 100, instructions: '' });
+  const [examForm, setExamForm] = useState({ subject: '', className: '', section: '', date: '', startTime: '', duration: '', room: '', totalMarks: 100, instructions: '' });
 
   // Marks State
   const [selectedExamId, setSelectedExamId] = useState('');
@@ -33,22 +34,24 @@ export default function TeacherDashboard() {
   };
 
   useEffect(() => {
-    if (activeTab === 'attendance') fetchStudents(className);
+    if (activeTab === 'attendance') fetchStudents(className, section);
     else if (activeTab === 'exams') fetchExams();
     else if (activeTab === 'marks') { fetchExams(); /* students fetched when exam selected */ }
     else if (activeTab === 'tuition') fetchTuitionRequests();
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'attendance') fetchStudents(className);
-  }, [className]);
+    if (activeTab === 'attendance') fetchStudents(className, section);
+  }, [className, section]);
 
 
   // ---- ATTENDANCE LOGIC ----
-  const fetchStudents = async (cName) => {
+  const fetchStudents = async (cName, cSection) => {
     if (!cName) return;
     try {
-      const { data } = await api.get('/admin/students?className=' + cName);
+      let url = '/admin/students?className=' + cName;
+      if (cSection) url += '&section=' + cSection;
+      const { data } = await api.get(url);
       setStudents(data);
       if (data.length > 0) {
         const initial = {};
@@ -73,7 +76,7 @@ export default function TeacherDashboard() {
         studentId, status
       }));
       await api.post('/attendance/mark', {
-        className, subject, date: attendanceDate, records
+        className, section, subject, date: attendanceDate, records
       });
       alert('Attendance Marked Successfully!');
     } catch (err) {
@@ -93,7 +96,7 @@ export default function TeacherDashboard() {
     try {
       await api.post('/exams', examForm);
       alert('Exam Created!');
-      setExamForm({ subject: '', className: '', date: '', startTime: '', duration: '', room: '', totalMarks: 100, instructions: '' });
+      setExamForm({ subject: '', className: '', section: '', date: '', startTime: '', duration: '', room: '', totalMarks: 100, instructions: '' });
       fetchExams();
     } catch(err) { alert('Error creating exam'); }
   };
@@ -103,7 +106,7 @@ export default function TeacherDashboard() {
     if (activeTab === 'marks' && selectedExamId) {
       const exam = exams.find(e => e._id === selectedExamId);
       if (exam) {
-        fetchStudents(exam.className);
+        fetchStudents(exam.className, exam.section);
         fetchExistingMarks(exam._id);
       }
     } else if (activeTab === 'marks' && !selectedExamId) {
@@ -140,6 +143,7 @@ export default function TeacherDashboard() {
              exam: exam._id,
              subject: exam.subject,
              className: exam.className,
+             section: exam.section,
              marksObtained: Number(record.obtained),
              totalMarks: Number(exam.totalMarks),
              remarks: record.remarks || ''
@@ -236,11 +240,15 @@ export default function TeacherDashboard() {
         {activeTab === 'attendance' && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 md:p-8 bg-gray-50/30 border-b border-gray-100 flex gap-4 flex-wrap">
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Class Section</label>
-                <input type="text" value={className} onChange={e => setClassName(e.target.value)} className="w-full pl-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20" placeholder="e.g. 10-A" />
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Class Level</label>
+                <input type="text" value={className} onChange={e => setClassName(e.target.value)} className="w-full pl-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20" placeholder="e.g. 10" />
               </div>
-              <div className="flex-1 min-w-[200px]">
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Section</label>
+                <input type="text" value={section} onChange={e => setSection(e.target.value)} className="w-full pl-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20" placeholder="e.g. A" />
+              </div>
+              <div className="flex-1 min-w-[150px]">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
                 <input type="text" value={subject} onChange={e => setSubject(e.target.value)} className="w-full pl-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20" placeholder="e.g. Mathematics" />
               </div>
@@ -301,16 +309,17 @@ export default function TeacherDashboard() {
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h3 className="text-lg font-bold mb-4">Schedule New Exam</h3>
-              <form onSubmit={handleExamSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <form onSubmit={handleExamSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <input required type="text" placeholder="Subject (e.g. Science)" value={examForm.subject} onChange={e=>setExamForm({...examForm, subject: e.target.value})} className="border p-2 rounded-xl" />
-                <input required type="text" placeholder="Class Name (e.g. 10-A)" value={examForm.className} onChange={e=>setExamForm({...examForm, className: e.target.value})} className="border p-2 rounded-xl" />
+                <input required type="text" placeholder="Class Name (e.g. 10)" value={examForm.className} onChange={e=>setExamForm({...examForm, className: e.target.value})} className="border p-2 rounded-xl" />
+                <input required type="text" placeholder="Section (e.g. A)" value={examForm.section} onChange={e=>setExamForm({...examForm, section: e.target.value})} className="border p-2 rounded-xl" />
                 <input required type="date" value={examForm.date} onChange={e=>setExamForm({...examForm, date: e.target.value})} className="border p-2 rounded-xl" />
                 <input required type="time" value={examForm.startTime} onChange={e=>setExamForm({...examForm, startTime: e.target.value})} className="border p-2 rounded-xl" />
                 <input required type="text" placeholder="Duration (e.g. 2 hours)" value={examForm.duration} onChange={e=>setExamForm({...examForm, duration: e.target.value})} className="border p-2 rounded-xl" />
                 <input type="text" placeholder="Room/Hall (e.g. Lab 3)" value={examForm.room} onChange={e=>setExamForm({...examForm, room: e.target.value})} className="border p-2 rounded-xl" />
                 <input required type="number" placeholder="Total Marks" value={examForm.totalMarks} onChange={e=>setExamForm({...examForm, totalMarks: e.target.value})} className="border p-2 rounded-xl" />
-                <input type="text" placeholder="Instructions (optional)" value={examForm.instructions} onChange={e=>setExamForm({...examForm, instructions: e.target.value})} className="border p-2 rounded-xl md:col-span-2" />
-                <button type="submit" className="bg-indigo-600 text-white rounded-xl py-2 md:col-span-3">Create Exam</button>
+                <input type="text" placeholder="Instructions (optional)" value={examForm.instructions} onChange={e=>setExamForm({...examForm, instructions: e.target.value})} className="border p-2 rounded-xl md:col-span-3" />
+                <button type="submit" className="bg-indigo-600 text-white rounded-xl py-2 md:col-span-4 shadow active:scale-95 transition-all font-bold">Create Exam</button>
               </form>
             </div>
 
@@ -319,7 +328,7 @@ export default function TeacherDashboard() {
               {exams.map(ex => (
                 <div key={ex._id} className="bg-white border rounded-2xl p-4 shadow-sm">
                   <h4 className="font-bold text-indigo-700">{ex.subject}</h4>
-                  <p className="text-sm text-gray-500 font-mono mb-2">Class: {ex.className}</p>
+                  <p className="text-sm text-gray-500 font-mono mb-2">Class: {ex.className} {ex.section ? `- ${ex.section}` : ''}</p>
                   <div className="text-sm">
                     <p><strong>Date:</strong> {new Date(ex.date).toLocaleDateString()}</p>
                     <p><strong>Time:</strong> {ex.startTime} ({ex.duration})</p>
@@ -340,7 +349,7 @@ export default function TeacherDashboard() {
                 <select value={selectedExamId} onChange={e => setSelectedExamId(e.target.value)} className="w-full md:w-1/2 p-2 border rounded-xl">
                   <option value="">-- Choose an Exam --</option>
                   {exams.map(ex => (
-                    <option key={ex._id} value={ex._id}>{ex.subject} ({ex.className}) - {new Date(ex.date).toLocaleDateString()}</option>
+                    <option key={ex._id} value={ex._id}>{ex.subject} ({ex.className}{ex.section ? `-${ex.section}` : ''}) - {new Date(ex.date).toLocaleDateString()}</option>
                   ))}
                 </select>
              </div>
