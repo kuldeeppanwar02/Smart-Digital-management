@@ -1,5 +1,6 @@
 const Marks = require('../models/Marks');
 const User = require('../models/User');
+const notificationController = require('./notificationController');
 
 // POST /api/marks  (Teacher enters marks)
 const enterMarks = async (req, res) => {
@@ -9,12 +10,30 @@ const enterMarks = async (req, res) => {
     if (existing) {
       Object.assign(existing, { marksObtained, totalMarks, remarks });
       await existing.save();
+      
+      // Auto-trigger Result Updated Notification
+      await notificationController.createNotification(
+        student,
+        'Result Updated',
+        `Your marks for ${subject || 'a subject'} have been updated.`,
+        'Result'
+      );
+      
       return res.json(existing);
     }
     const marks = await Marks.create({
       schoolId: req.user.schoolId, student, exam, subject, className, marksObtained, totalMarks,
       remarks: remarks || '', enteredBy: req.user._id,
     });
+
+    // Auto-trigger Result Published Notification
+    await notificationController.createNotification(
+      student,
+      'Result Published',
+      `Your marks for ${subject || 'a subject'} have been uploaded.`,
+      'Result'
+    );
+
     res.status(201).json(marks);
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import api from '../api';
 import { 
   LayoutDashboard, 
   CalendarDays, 
@@ -49,6 +50,37 @@ const Layout = ({ children }) => {
   };
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!user._id) return;
+      try {
+        const { data } = await api.get('/notifications/my');
+        setNotifications(data);
+      } catch (err) { console.error('Failed to fetch notifications', err); }
+    };
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Poll every minute
+    return () => clearInterval(interval);
+  }, [user._id]);
+
+  const markAsRead = async (id) => {
+    try {
+      await api.patch(`/notifications/${id}/read`);
+      setNotifications(notifications.map(n => n._id === id ? { ...n, isRead: true } : n));
+    } catch (err) { console.error(err); }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await api.patch('/notifications/read-all');
+      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    } catch (err) { console.error(err); }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -187,10 +219,52 @@ const Layout = ({ children }) => {
 
           <div className="flex items-center gap-6">
             <LiveClock />
-            <button className="relative text-gray-400 hover:text-white transition-colors">
-              <Bell className="w-6 h-6" />
-              <span className="absolute 1 top-0 right-0 w-2.5 h-2.5 bg-[#FF3B30] rounded-full border-2 border-[#121212]"></span>
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative text-gray-400 hover:text-white transition-colors"
+               >
+                <Bell className="w-6 h-6" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#FF3B30] border-2 border-[#121212] text-[9px] font-bold text-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              
+              {showNotifications && (
+                <div className="absolute right-0 mt-4 w-80 bg-[#1e1e1e]/95 backdrop-blur-3xl border border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50 animate-fade-in origin-top-right">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
+                    <h3 className="font-bold text-white">Notifications</h3>
+                    <button onClick={markAllAsRead} className="text-xs text-[#0A84FF] hover:text-blue-400 font-semibold px-2 py-1 rounded-md hover:bg-[#0A84FF]/10 transition-colors">Mark all read</button>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto w-full custom-scrollbar">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center flex flex-col items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                           <Bell className="w-5 h-5 text-gray-500" />
+                        </div>
+                        <p className="text-sm font-semibold text-gray-400">No new notifications</p>
+                        <p className="text-xs text-gray-500 mt-1">You're all caught up!</p>
+                      </div>
+                    ) : (
+                      notifications.map(n => (
+                         <div key={n._id} onClick={() => markAsRead(n._id)} className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${n.isRead ? 'opacity-50' : 'bg-[#0A84FF]/5'}`}>
+                            <div className="flex gap-3">
+                               <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.isRead ? 'bg-transparent' : 'bg-[#0A84FF] shadow-[0_0_8px_rgba(10,132,255,0.8)]'}`}></div>
+                               <div>
+                                 <p className={`text-sm ${n.isRead ? 'font-medium text-gray-300' : 'font-bold text-white'} mb-0.5`}>{n.title}</p>
+                                 <p className="text-xs text-gray-400 leading-snug">{n.message}</p>
+                                 <p className="text-[10px] text-gray-500 mt-2 font-medium">{new Date(n.createdAt).toLocaleString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</p>
+                               </div>
+                            </div>
+                         </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-3 border-l border-white/10 pl-6 cursor-pointer">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0A84FF] to-purple-600 flex items-center justify-center text-white font-bold shadow-lg">
                 {user.name ? user.name.charAt(0).toUpperCase() : 'A'}
