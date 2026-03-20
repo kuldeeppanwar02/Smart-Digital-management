@@ -27,6 +27,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/parent', require('./routes/parentRoutes'));
 app.use('/api/timetable', require('./routes/timetable'));
 app.use('/api/fees', require('./routes/feeRoutes'));
+app.use('/api/analytics', require('./routes/analytics'));
 
 // Health check
 app.get('/', (req, res) => res.json({ message: 'Smart School System API Running ✅' }));

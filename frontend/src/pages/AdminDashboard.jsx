@@ -12,29 +12,7 @@ import {
   Calendar as CalendarIcon,
   Map
 } from 'lucide-react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Filler,
-  Legend,
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Filler,
-  Legend
-);
+import AdminAnalyticsCharts from '../components/AdminAnalyticsCharts';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -207,31 +185,7 @@ const AdminDashboard = () => {
     alert(`Invite link for ${role} copied to clipboard!`);
   };
 
-  const chartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        fill: true,
-        label: 'Student Attendance (%)',
-        data: [92, 94, 91, 95, 96, 94],
-        borderColor: '#0A84FF',
-        backgroundColor: 'rgba(10, 132, 255, 0.1)',
-        tension: 0.4,
-      },
-    ],
-  };
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-    },
-    scales: {
-      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a3a3a3' } },
-      x: { grid: { display: false }, ticks: { color: '#a3a3a3' } }
-    }
-  };
 
   return (
     <div className="w-full">
@@ -289,18 +243,9 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 glass-card rounded-2xl p-6 h-[400px] flex flex-col">
-            <h2 className="text-lg font-bold font-heading mb-4 flex justify-between items-center">
-              Performance Trends
-              <span className="text-sm font-medium text-gray-400 bg-white/5 px-3 py-1 rounded-full cursor-pointer hover:bg-white/10 transition-colors">This Year v</span>
-            </h2>
-            <div className="flex-1 relative">
-              <Line data={chartData} options={chartOptions} />
-            </div>
-          </div>
-          
-          <div className="space-y-6">
+        <AdminAnalyticsCharts />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
             <div className="glass-card rounded-2xl p-6">
                <h2 className="text-lg font-bold font-heading mb-4 flex items-center gap-2">
                   <CalendarIcon className="w-5 h-5 text-[#0A84FF]" /> Upcoming Events
@@ -345,7 +290,6 @@ const AdminDashboard = () => {
                   </div>
                </div>
             </div>
-          </div>
         </div>
           </>
         )}
