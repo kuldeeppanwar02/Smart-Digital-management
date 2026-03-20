@@ -25,12 +25,18 @@ const Layout = ({ children }) => {
     navigate('/');
   };
 
+  const getBasePath = () => {
+    if (user.role === 'superadmin' || user.role === 'school_admin' || user.role === 'principal') return '/admin';
+    return `/${user.role}`;
+  };
+  const basePath = getBasePath();
+
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: `/${user.role === 'superadmin' ? 'admin' : user.role}` },
-    { id: 'timetable', label: 'Timetables', icon: CalendarDays, path: '/timetable' }, // Assume path for Timetable
-    { id: 'users', label: 'Students & Staff', icon: Users, path: '/users' },
-    { id: 'fees', label: 'Fees & Finance', icon: Wallet, path: '/fees' },
-    { id: 'tracking', label: 'Bus Tracking', icon: Map, path: '/tracking' },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: basePath },
+    { id: 'timetable', label: 'Timetables', icon: CalendarDays, path: `${basePath}/timetable` },
+    { id: 'users', label: 'Students & Staff', icon: Users, path: `${basePath}/users` },
+    { id: 'fees', label: 'Fees & Finance', icon: Wallet, path: `${basePath}/fees` },
+    { id: 'tracking', label: 'Bus Tracking', icon: Map, path: `${basePath}/tracking` },
   ];
 
   return (

@@ -28,7 +28,7 @@ const App = () => {
           <Route path="/register" element={<SchoolRegistration />} />
           <Route path="/register-user" element={<UserRegistration />} />
           <Route
-            path="/admin"
+            path="/admin/*"
             element={
               <PrivateRoute allowedRoles={['superadmin', 'school_admin', 'principal']}>
                 <AdminDashboard />

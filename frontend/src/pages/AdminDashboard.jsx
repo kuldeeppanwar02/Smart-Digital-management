@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import AdminFees from '../components/AdminFees';
 import AdminTimetable from '../components/AdminTimetable';
@@ -9,7 +9,8 @@ import {
   Wallet, 
   CheckCircle,
   TrendingUp,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Map
 } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -38,12 +39,13 @@ ChartJS.register(
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [school, setSchool] = useState(null);
-  const [activeModule, setActiveModule] = useState('users'); // users or fees
   const [activeTab, setActiveTab] = useState('student');
   const [searchTerm, setSearchTerm] = useState('');
   const [approvalModal, setApprovalModal] = useState({ isOpen: false, user: null, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' });
   const [editModal, setEditModal] = useState({ isOpen: false, user: null, formData: {} });
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   // Predefined standard classes and sections to prevent typing errors and ensure assignments can happen before students register
@@ -223,6 +225,8 @@ const AdminDashboard = () => {
     <div className="w-full">
       <div className="text-[#e5e5e5] space-y-8 animate-fade-in w-full pb-10">
         
+        {(currentPath.endsWith('/admin') || currentPath.endsWith('/admin/')) && (
+          <>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="glass-card rounded-2xl p-6 flex items-center gap-4 group cursor-pointer">
             <div className="p-4 bg-[#0A84FF]/20 rounded-xl text-[#0A84FF] group-hover:scale-110 transition-transform">
@@ -331,6 +335,8 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+          </>
+        )}
 
 
         {/* Approval Modal */}
@@ -755,31 +761,10 @@ const AdminDashboard = () => {
         )}
 
         {/* Master Active Module Navigation */}
-        <div className="flex gap-4 mb-6 mt-2 ml-2 overflow-x-auto pb-2 custom-scrollbar">
-          <button 
-             onClick={() => setActiveModule('users')}
-             className={`px-5 py-2.5 rounded-2xl font-bold transition-all whitespace-nowrap ${activeModule === 'users' ? 'bg-[#0A84FF] text-white shadow-lg shadow-[#0A84FF]/30' : 'glass-card text-gray-400 hover:text-white'}`}
-          >
-             Users Matrix
-          </button>
-          <button 
-             onClick={() => setActiveModule('fees')}
-             className={`px-5 py-2.5 rounded-2xl font-bold transition-all whitespace-nowrap ${activeModule === 'fees' ? 'bg-[#34C759] text-white shadow-lg shadow-[#34C759]/30' : 'glass-card text-gray-400 hover:text-white'}`}
-          >
-             Fees & Commerce
-          </button>
-          <button 
-             onClick={() => setActiveModule('timetable')}
-             className={`px-5 py-2.5 rounded-2xl font-bold transition-all whitespace-nowrap ${activeModule === 'timetable' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' : 'glass-card text-gray-400 hover:text-white'}`}
-          >
-             Timetable Planner
-          </button>
-        </div>
-
-        <main className="space-y-6">
+        <main className="space-y-6 flex-1 h-full">
           
           {/* School Configuration Panel for School Admins */}
-          {school && (
+          {(currentPath.endsWith('/admin') || currentPath.endsWith('/admin/')) && school && (
             <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#0A84FF]/10 rounded-bl-full -z-10 blur-xl"></div>
               
@@ -828,11 +813,11 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {activeModule === 'fees' ? (
+          {currentPath.includes('/fees') ? (
              <AdminFees />
-          ) : activeModule === 'timetable' ? (
+          ) : currentPath.includes('/timetable') ? (
              <AdminTimetable />
-          ) : (
+          ) : currentPath.includes('/users') ? (
             <>
             <div className="glass-card rounded-2xl p-8">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -988,7 +973,15 @@ const AdminDashboard = () => {
             </div>
             </div>
             </>
-          )}
+          ) : currentPath.includes('/tracking') ? (
+            <div className="glass-card rounded-2xl p-8 flex flex-col items-center justify-center min-h-[400px]">
+              <div className="w-16 h-16 bg-[#0A84FF]/20 text-[#0A84FF] rounded-full flex items-center justify-center mb-4">
+                <Map className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Live Bus Tracking</h2>
+              <p className="text-gray-400">Map integration and active route monitoring coming soon.</p>
+            </div>
+          ) : null}
         </main>
       </div>
     </div>
