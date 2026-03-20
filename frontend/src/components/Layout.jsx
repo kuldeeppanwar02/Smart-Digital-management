@@ -73,10 +73,18 @@ const Layout = ({ children }) => {
 
         {/* Bottom Actions */}
         <div className="p-4 border-t border-white/5 space-y-2">
-           <button className="w-full flex items-center px-3 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all">
+           <NavLink 
+            to={`${basePath}/settings`}
+            className={({ isActive }) => `
+              w-full flex items-center px-3 py-3 rounded-xl transition-all duration-200
+              ${isActive 
+                ? 'bg-white/10 text-white border border-white/20' 
+                : 'text-gray-400 hover:bg-white/5 hover:text-white'}
+            `}
+          >
             <Settings className={`w-5 h-5 ${isSidebarOpen ? 'mr-3' : 'mx-auto'}`} />
             {isSidebarOpen && <span>Settings</span>}
-          </button>
+          </NavLink>
           <button onClick={handleLogout} className="w-full flex items-center px-3 py-3 rounded-xl text-red-400 hover:bg-red-400/10 hover:text-red-300 transition-all">
             <LogOut className={`w-5 h-5 ${isSidebarOpen ? 'mr-3' : 'mx-auto'}`} />
             {isSidebarOpen && <span>Log Out</span>}

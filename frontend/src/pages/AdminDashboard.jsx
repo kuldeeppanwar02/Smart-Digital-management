@@ -764,7 +764,7 @@ const AdminDashboard = () => {
         <main className="space-y-6 flex-1 h-full">
           
           {/* School Configuration Panel for School Admins */}
-          {(currentPath.endsWith('/admin') || currentPath.endsWith('/admin/')) && school && (
+          {currentPath.endsWith('/settings') && school && (
             <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#0A84FF]/10 rounded-bl-full -z-10 blur-xl"></div>
               
