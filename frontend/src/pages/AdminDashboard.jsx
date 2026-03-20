@@ -974,12 +974,99 @@ const AdminDashboard = () => {
             </div>
             </>
           ) : currentPath.includes('/tracking') ? (
-            <div className="glass-card rounded-2xl p-8 flex flex-col items-center justify-center min-h-[400px]">
-              <div className="w-16 h-16 bg-[#0A84FF]/20 text-[#0A84FF] rounded-full flex items-center justify-center mb-4">
-                <Map className="w-8 h-8" />
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold font-heading text-white flex items-center gap-3">
+                    <Map className="w-6 h-6 text-[#0A84FF]" />
+                    Live Bus Tracking
+                  </h2>
+                  <p className="text-gray-400 mt-1">Real-time GPS tracking for active school routes.</p>
+                </div>
+                <button className="bg-[#0A84FF] hover:bg-blue-600 shadow-[0_0_15px_rgba(10,132,255,0.3)] text-white px-5 py-2.5 rounded-xl font-bold transition-all text-sm w-full sm:w-auto">
+                  + Add New Route
+                </button>
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Live Bus Tracking</h2>
-              <p className="text-gray-400">Map integration and active route monitoring coming soon.</p>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                
+                {/* Map View */}
+                <div className="xl:col-span-2 glass-card rounded-2xl relative overflow-hidden h-[400px] md:h-[500px] border border-white/10 group">
+                  <div className="absolute inset-0 bg-[url('https://maps.googleapis.com/maps/api/staticmap?center=40.714%2c-74.005&zoom=13&size=800x600&maptype=roadmap&style=feature:all|element:labels.text.fill|color:0x8ec3b9&style=feature:all|element:labels.text.stroke|color:0x1a3646&style=feature:road|element:geometry|color:0x304a7d')] bg-cover bg-center opacity-40 mix-blend-screen group-hover:scale-105 transition-transform duration-1000"></div>
+                  
+                  {/* Fake Bus Marker 1 */}
+                  <div className="absolute top-[35%] left-[45%] animate-pulse cursor-pointer hover:scale-125 transition-transform z-10">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-[#121212]/50 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(10,132,255,0.4)]">
+                        <div className="w-8 h-8 rounded-full bg-[#0A84FF]/20 flex items-center justify-center">
+                          <Map className="w-4 h-4 text-[#0A84FF]" />
+                        </div>
+                      </div>
+                      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-[#1E1E1E] border border-[#0A84FF]/30 text-xs font-bold px-2 py-1 rounded text-white whitespace-nowrap shadow-xl">
+                        Bus 42
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fake Bus Marker 2 */}
+                  <div className="absolute top-[60%] right-[30%] animate-pulse cursor-pointer hover:scale-125 transition-transform z-10" style={{ animationDelay: '1s' }}>
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-[#121212]/50 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.4)]">
+                        <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                          <Map className="w-4 h-4 text-amber-500" />
+                        </div>
+                      </div>
+                      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-[#1E1E1E] border border-amber-500/30 text-xs font-bold px-2 py-1 rounded text-white whitespace-nowrap shadow-xl">
+                        Bus 12
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Map Overlay Stats */}
+                  <div className="absolute top-4 left-4 right-4 flex justify-between gap-4 pointer-events-none z-20">
+                    <div className="bg-[#121212]/90 backdrop-blur-xl border border-white/10 px-4 py-2.5 rounded-xl pointer-events-auto shadow-2xl">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Fleet Status</p>
+                      <p className="text-sm text-[#34C759] font-bold flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#34C759] animate-ping relative"><span className="absolute inset-0 rounded-full bg-[#34C759]"></span></span>
+                        2 Active Routes
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Route List */}
+                <div className="space-y-4">
+                  {[ 
+                    { id: 42, route: 'Route B - Downtown Area', status: 'On Route', time: 'Arriving in 5 mins', color: 'text-[#0A84FF]', bg: 'bg-[#0A84FF]/10', border: 'border-[#0A84FF]/20', dot: 'bg-[#0A84FF]' },
+                    { id: 12, route: 'Route C - North Side Suburbs', status: 'Delayed Traffic', time: 'Arriving in 15 mins', color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20', dot: 'bg-amber-500' },
+                    { id: 8, route: 'Route A - City Center', status: 'Completed', time: 'Arrived at 8:15 AM', color: 'text-[#34C759]', bg: 'bg-[#34C759]/10', border: 'border-[#34C759]/20', dot: 'bg-[#34C759]' }
+                  ].map(bus => (
+                    <div key={bus.id} className="glass-card rounded-2xl p-5 hover:bg-white/5 transition-colors cursor-pointer group border-transparent hover:border-white/10">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-xl ${bus.bg} ${bus.color} flex items-center justify-center border ${bus.border} group-hover:scale-110 transition-transform`}>
+                            <Map className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-white text-base">Bus {bus.id}</h3>
+                            <p className="text-sm text-gray-400 mt-0.5">{bus.route}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center mb-3">
+                        <span className={`text-xs font-bold px-2.5 py-1 flex items-center gap-1.5 rounded-md ${bus.bg} ${bus.color} border ${bus.border}`}>
+                          {bus.status !== 'Completed' && <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${bus.dot}`}></span>}
+                          {bus.status}
+                        </span>
+                      </div>
+                      <div className="bg-[#121212] rounded-xl p-3 border border-white/5 flex justify-between items-center group-hover:bg-black/40 transition-colors">
+                        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">ETA</span>
+                        <span className="text-sm font-bold text-white">{bus.time}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : null}
         </main>
