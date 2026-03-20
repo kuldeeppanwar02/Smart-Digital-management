@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -15,7 +15,20 @@ import {
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) setIsSidebarOpen(false);
+      else setIsSidebarOpen(true);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleNavClick = () => {
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
+  };
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -42,9 +55,17 @@ const Layout = ({ children }) => {
   return (
     <div className="flex h-screen bg-[#121212] text-[#e5e5e5] overflow-hidden font-sans">
       
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside 
-        className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-[#1E1E1E]/80 backdrop-blur-xl border-r border-white/5 transition-all duration-300 flex flex-col z-20`}
+        className={`fixed md:relative z-30 h-full bg-[#1E1E1E]/80 backdrop-blur-xl border-r border-white/5 transition-transform duration-300 md:transition-all flex flex-col ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 md:translate-x-0 md:w-20'}`}
       >
         {/* Logo Area */}
         <div className="h-20 flex items-center justify-center border-b border-white/5">
@@ -58,6 +79,7 @@ const Layout = ({ children }) => {
             <NavLink
               key={item.id}
               to={item.path}
+              onClick={handleNavClick}
               className={({ isActive }) => `
                 flex items-center px-3 py-3 rounded-xl transition-all duration-200 group
                 ${isActive 
@@ -75,6 +97,7 @@ const Layout = ({ children }) => {
         <div className="p-4 border-t border-white/5 space-y-2">
            <NavLink 
             to={`${basePath}/settings`}
+            onClick={handleNavClick}
             className={({ isActive }) => `
               w-full flex items-center px-3 py-3 rounded-xl transition-all duration-200
               ${isActive 
