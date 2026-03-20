@@ -5,7 +5,9 @@ export default function AdminTimetable() {
   const [teachers, setTeachers] = useState([]);
   const [selectedClass, setSelectedClass] = useState('10');
   const [selectedSection, setSelectedSection] = useState('A');
-  const [selectedDay, setSelectedDay] = useState('Monday');
+  const currentDay = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  const initialDay = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].includes(currentDay) ? currentDay : 'Monday';
+  const [selectedDay, setSelectedDay] = useState(initialDay);
   
   // Array of 8 periods
   const [periods, setPeriods] = useState(

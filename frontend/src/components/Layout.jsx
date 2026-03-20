@@ -15,6 +15,23 @@ import {
   Plus
 } from 'lucide-react';
 
+const LiveClock = () => {
+  const [time, setTime] = useState(new Date());
+  
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="hidden md:flex items-center gap-2 text-sm text-gray-400 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full font-medium">
+      <CalendarDays className="w-4 h-4 text-[#0A84FF]" />
+      {time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+      <span className="text-white ml-1 font-bold">{time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+    </div>
+  );
+};
+
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
 
@@ -139,6 +156,7 @@ const Layout = ({ children }) => {
           </div>
 
           <div className="flex items-center gap-6">
+            <LiveClock />
             <button className="relative text-gray-400 hover:text-white transition-colors">
               <Bell className="w-6 h-6" />
               <span className="absolute 1 top-0 right-0 w-2.5 h-2.5 bg-[#FF3B30] rounded-full border-2 border-[#121212]"></span>
