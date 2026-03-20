@@ -61,6 +61,8 @@ const Layout = ({ children }) => {
     return `/${user.role}`;
   };
   const basePath = getBasePath();
+  
+  const showGlobalSidebar = (user.role === 'superadmin' || user.role === 'school_admin' || user.role === 'principal');
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: basePath },
@@ -98,7 +100,7 @@ const Layout = ({ children }) => {
     <div className="flex h-screen bg-[#121212] text-[#e5e5e5] overflow-hidden font-sans">
       
       {/* Mobile Overlay */}
-      {isSidebarOpen && (
+      {showGlobalSidebar && isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
@@ -106,6 +108,7 @@ const Layout = ({ children }) => {
       )}
 
       {/* Sidebar */}
+      {showGlobalSidebar && (
       <aside 
         className={`fixed md:relative z-30 h-full bg-[#1E1E1E]/80 backdrop-blur-xl border-r border-white/5 transition-transform duration-300 md:transition-all flex flex-col ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 md:translate-x-0 md:w-20'}`}
       >
@@ -156,19 +159,22 @@ const Layout = ({ children }) => {
           </button>
         </div>
       </aside>
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         
         {/* Top Header */}
-        <header className="h-20 bg-[#121212]/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-10">
+        <header className="h-20 bg-[#121212]/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-10 shrink-0">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors focus:outline-none"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
+            {showGlobalSidebar && (
+              <button 
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors focus:outline-none"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            )}
             <div className="relative group hidden sm:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#0A84FF] transition-colors" />
               <input 
@@ -194,6 +200,11 @@ const Layout = ({ children }) => {
                 <p className="text-gray-400 text-xs capitalize">{user.role || 'Administrator'}</p>
               </div>
             </div>
+            {!showGlobalSidebar && (
+              <button onClick={handleLogout} className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-colors ml-2" title="Log Out">
+                <LogOut className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </header>
 
@@ -209,6 +220,7 @@ const Layout = ({ children }) => {
         </main>
 
         {/* Mobile Bottom Navigation */}
+        {showGlobalSidebar && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1E1E1E]/95 backdrop-blur-xl border-t border-white/10 z-50 px-6 py-3 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
           <div className="flex justify-between items-center relative gap-2 overflow-x-auto no-scrollbar">
             {filteredMenuItems.map((item) => (
@@ -229,6 +241,7 @@ const Layout = ({ children }) => {
             </NavLink>
           </div>
         </div>
+        )}
 
       </div>
     </div>
