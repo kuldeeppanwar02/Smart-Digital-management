@@ -11,6 +11,7 @@ const examSchema = new mongoose.Schema({
   room: { type: String, default: 'TBD' },
   totalMarks: { type: Number, required: true },
   instructions: { type: String, default: '' },
+  examType: { type: String, enum: ['Internal', 'External', 'Board'], default: 'Internal' },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true });
 

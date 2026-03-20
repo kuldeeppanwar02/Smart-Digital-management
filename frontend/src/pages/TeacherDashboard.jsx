@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import TeacherTimetable from '../components/TeacherTimetable';
 import ClassTimetableBuilder from '../components/ClassTimetableBuilder';
+import FastScanAttendance from '../components/FastScanAttendance';
 
 export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState('attendance');
@@ -263,8 +264,15 @@ export default function TeacherDashboard() {
         
         {/* ATTENDANCE TAB */}
         {activeTab === 'attendance' && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6 md:p-8 bg-gray-50/30 border-b border-gray-100 flex gap-4 flex-wrap">
+          <div className="space-y-6 animate-fade-in">
+            <FastScanAttendance 
+              students={students} 
+              attendanceRecords={attendanceRecords} 
+              setAttendanceRecords={setAttendanceRecords} 
+            />
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="p-6 md:p-8 bg-gray-50/30 border-b border-gray-100 flex gap-4 flex-wrap">
               <div className="flex-1 min-w-[150px]">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Class Level</label>
                 <input type="text" value={className} onChange={e => setClassName(e.target.value)} className="w-full pl-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20" placeholder="e.g. 10" />
@@ -324,8 +332,9 @@ export default function TeacherDashboard() {
               </table>
             </div>
             <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end">
-              <button disabled={students.length === 0} onClick={submitAttendance} className="bg-indigo-600 text-white px-8 py-3 rounded-xl disabled:opacity-50">Save Attendance</button>
+              <button disabled={students.length === 0} onClick={submitAttendance} className="bg-indigo-600 font-bold tracking-wide text-white px-8 py-3 rounded-xl disabled:opacity-50 transition-colors shadow">Save Attendance</button>
             </div>
+          </div>
           </div>
         )}
 

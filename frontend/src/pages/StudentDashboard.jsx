@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import StudentFees from '../components/StudentFees';
 import StudentTimetable from '../components/StudentTimetable';
+import ReportCardPDF from '../components/ReportCardPDF';
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('attendance');
@@ -10,6 +11,7 @@ export default function StudentDashboard() {
   const [attendanceFilter, setAttendanceFilter] = useState('Total');
   const [queryForm, setQueryForm] = useState({ subject: '', message: '' });
   const [myQueries, setMyQueries] = useState([]);
+  const [reportCard, setReportCard] = useState(null);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const navigate = useNavigate();
@@ -22,7 +24,17 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (activeTab === 'attendance') fetchAttendance();
     if (activeTab === 'query') fetchQueries();
+    if (activeTab === 'marks' || activeTab === 'exams') fetchReportCard();
   }, [activeTab]);
+
+  const fetchReportCard = async () => {
+    try {
+      const { data } = await api.get(`/marks/report-card/${user._id}`);
+      setReportCard(data);
+    } catch (err) {
+      console.error('Failed to fetch report card', err);
+    }
+  };
 
   const fetchAttendance = async () => {
     try {
@@ -168,6 +180,18 @@ export default function StudentDashboard() {
 
         {activeTab === 'attendance' && (
           <div className="space-y-8">
+            {filteredAttendance.summary.total > 5 && filteredAttendance.summary.percentage < 75 && (
+              <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-start gap-4 shadow-sm animate-fade-in">
+                <div className="p-2 bg-red-100 rounded-lg shrink-0">
+                  <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold uppercase tracking-wider mb-1">Low Attendance Warning</h4>
+                  <p className="text-sm font-medium">Your current attendance is <strong>{filteredAttendance.summary.percentage}%</strong>, which is below the mandatory 75% threshold. Please ensure regular attendance to qualify for final exams.</p>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-2 mb-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm w-fit">
               {['Current Month', 'Previous Month', 'Total'].map(filter => (
                 <button
@@ -330,15 +354,11 @@ export default function StudentDashboard() {
         )}
 
         {['exams', 'marks'].includes(activeTab) && (
-          <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 border border-gray-100">
-              <svg className="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1 capitalize">{activeTab} Details</h3>
-            <p className="text-gray-500 max-w-sm">This module is currently in development. Your data will be accessible here in the next update.</p>
-          </div>
+          reportCard ? (
+            <ReportCardPDF data={reportCard} />
+          ) : (
+            <div className="p-8 text-center text-gray-500">Loading academic records...</div>
+          )
         )}
       </main>
     </div>

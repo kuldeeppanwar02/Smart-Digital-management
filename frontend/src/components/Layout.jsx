@@ -70,6 +70,27 @@ const Layout = ({ children }) => {
     { id: 'tracking', label: 'Bus Tracking', icon: Map, path: `${basePath}/tracking` },
   ];
 
+  const filteredMenuItems = menuItems.filter(item => {
+    if (user.role === 'superadmin' || user.role === 'principal') return true;
+    // If it's a teacher, student, parent, they get their own menus anyway, the filter applies mostly to 'school_admin'
+    if (user.role !== 'school_admin') return true; 
+
+    // If a school_admin has no specific sub-permissions set, they assume full admin access.
+    if (!user.permissions || user.permissions.length === 0) return true;
+
+    const requiredPermMap = {
+      dashboard: null,
+      timetable: 'manage_timetable',
+      users: 'manage_users',
+      fees: 'manage_fees',
+      tracking: 'manage_transport'
+    };
+    
+    const reqPerm = requiredPermMap[item.id];
+    if (!reqPerm) return true;
+    return user.permissions.includes(reqPerm);
+  });
+
   return (
     <div className="flex h-screen bg-[#121212] text-[#e5e5e5] overflow-hidden font-sans">
       
@@ -93,7 +114,7 @@ const Layout = ({ children }) => {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <NavLink
               key={item.id}
               to={item.path}
@@ -186,28 +207,22 @@ const Layout = ({ children }) => {
 
         {/* Mobile Bottom Navigation */}
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1E1E1E]/95 backdrop-blur-xl border-t border-white/10 z-50 px-6 py-3 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-          <div className="flex justify-between items-center relative">
-            <NavLink to={basePath} end onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
-              <LayoutDashboard className="w-6 h-6" />
-              <span className="text-[10px] font-semibold tracking-wide">Dash</span>
-            </NavLink>
-            <NavLink to={`${basePath}/users`} onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
-              <Users className="w-6 h-6" />
-              <span className="text-[10px] font-semibold tracking-wide">Students</span>
-            </NavLink>
-            
-            <NavLink to={`${basePath}/timetable`} onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
-              <CalendarDays className="w-6 h-6" />
-              <span className="text-[10px] font-semibold tracking-wide">Timetable</span>
-            </NavLink>
-
-            <NavLink to={`${basePath}/tracking`} onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
-              <Map className="w-6 h-6" />
-              <span className="text-[10px] font-semibold tracking-wide">Bus</span>
-            </NavLink>
-            <NavLink to={`${basePath}/settings`} onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
-              <Settings className="w-6 h-6" />
-              <span className="text-[10px] font-semibold tracking-wide">Settings</span>
+          <div className="flex justify-between items-center relative gap-2 overflow-x-auto no-scrollbar">
+            {filteredMenuItems.map((item) => (
+               <NavLink 
+                 key={item.id}
+                 to={item.path} 
+                 end={item.id === 'dashboard'} 
+                 onClick={handleNavClick} 
+                 className={({isActive}) => `flex flex-col items-center gap-1 transition-colors min-w-[3.5rem] ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}
+               >
+                 <item.icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                 <span className="text-[9px] sm:text-[10px] font-semibold tracking-wide whitespace-nowrap">{item.label.split(' ')[0]}</span>
+               </NavLink>
+            ))}
+            <NavLink to={`${basePath}/settings`} onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors min-w-[3.5rem] ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
+              <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
+              <span className="text-[9px] sm:text-[10px] font-semibold tracking-wide whitespace-nowrap">Settings</span>
             </NavLink>
           </div>
         </div>

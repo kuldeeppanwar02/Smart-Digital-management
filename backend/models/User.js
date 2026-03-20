@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
     enum: ['superadmin', 'school_admin', 'principal', 'teacher', 'student', 'parent'],
     required: true,
   },
+  permissions: [{ type: String }], // e.g. ['manage_fees', 'manage_users'] for sub-admins
   // Student-specific
   rollNumber: { type: String },
   className: { type: String }, // e.g. "10", "11"

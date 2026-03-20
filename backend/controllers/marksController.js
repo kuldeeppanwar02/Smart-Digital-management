@@ -1,4 +1,5 @@
 const Marks = require('../models/Marks');
+const User = require('../models/User');
 
 // POST /api/marks  (Teacher enters marks)
 const enterMarks = async (req, res) => {
@@ -48,4 +49,60 @@ const getExamMarks = async (req, res) => {
   }
 };
 
-module.exports = { enterMarks, getStudentMarks, getExamMarks };
+// GET /api/marks/report-card/:studentId
+const getStudentReportCard = async (req, res) => {
+  const studentId = req.params.studentId || req.user._id;
+  if (req.user.role === 'student' && studentId.toString() !== req.user._id.toString())
+    return res.status(403).json({ message: 'Access denied' });
+
+  try {
+    const student = await User.findById(studentId).select('name rollNumber className section');
+    const marks = await Marks.find({ student: studentId }).populate('exam', 'subject date totalMarks examType');
+    
+    let totalObtained = 0;
+    let totalExpected = 0;
+    const subjects = marks.map(m => {
+       totalObtained += m.marksObtained;
+       totalExpected += m.totalMarks;
+       return {
+         subject: m.subject,
+         marksObtained: m.marksObtained,
+         totalMarks: m.totalMarks,
+         grade: m.grade,
+         remarks: m.remarks,
+         examType: m.exam?.examType || 'Internal',
+         date: m.exam?.date
+       };
+    });
+    
+    const percentage = totalExpected > 0 ? ((totalObtained / totalExpected) * 100).toFixed(2) : 0;
+    
+    // Calculate rank
+    const peers = await User.find({ className: student.className, section: student.section, role: 'student', schoolId: req.user.schoolId });
+    const peerIds = peers.map(p => p._id);
+    const allMarks = await Marks.aggregate([
+      { $match: { student: { $in: peerIds } } },
+      { $group: { _id: '$student', total: { $sum: '$marksObtained' } } },
+      { $sort: { total: -1 } }
+    ]);
+    
+    const rankIndex = allMarks.findIndex(m => m._id.toString() === studentId.toString());
+    const rank = rankIndex !== -1 ? rankIndex + 1 : 'N/A';
+
+    res.json({
+       student,
+       subjects,
+       summary: {
+         totalObtained,
+         totalExpected,
+         percentage: Number(percentage),
+         rank,
+         totalStudentsInClass: peers.length
+       }
+    });
+  } catch(err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { enterMarks, getStudentMarks, getExamMarks, getStudentReportCard };

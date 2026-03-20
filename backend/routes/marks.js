@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { protect, restrictTo } = require('../middleware/auth');
-const { enterMarks, getStudentMarks, getExamMarks } = require('../controllers/marksController');
+const { enterMarks, getStudentMarks, getExamMarks, getStudentReportCard } = require('../controllers/marksController');
 
 router.post('/', protect, restrictTo('teacher', 'admin'), enterMarks);
+router.get('/report-card/:studentId', protect, getStudentReportCard);
 router.get('/student/:studentId', protect, getStudentMarks);
 router.get('/my', protect, restrictTo('student'), (req, res, next) => {
   req.params.studentId = req.user._id;
