@@ -39,6 +39,7 @@ ChartJS.register(
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [school, setSchool] = useState(null);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const [activeTab, setActiveTab] = useState('student');
   const [searchTerm, setSearchTerm] = useState('');
   const [approvalModal, setApprovalModal] = useState({ isOpen: false, user: null, rollNumber: '', className: '', section: '', subjects: '', teachingClasses: '', teachingSections: '' });
@@ -72,8 +73,19 @@ const AdminDashboard = () => {
     return categories;
   };
 
+  const fetchRevenue = async () => {
+    try {
+      const { data } = await api.get('/fees/school/2023-2024');
+      const revenue = data.reduce((acc, curr) => acc + (curr.paid || 0), 0);
+      setTotalRevenue(revenue);
+    } catch(err) {
+      console.error('Error fetching revenue', err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchRevenue();
     if (user.role === 'school_admin' || user.role === 'principal') {
       fetchSchoolConfig();
     }
@@ -259,8 +271,8 @@ const AdminDashboard = () => {
             <div>
               <p className="text-sm text-gray-400 font-medium tracking-wide">Total Revenue</p>
               <div className="flex items-center gap-2">
-                <h3 className="text-3xl font-bold font-heading">$1.2M</h3>
-                <span className="text-xs font-semibold text-[#34C759] flex items-center bg-[#34C759]/10 px-2 py-0.5 rounded-full"><TrendingUp className="w-3 h-3 mr-1" />8%</span>
+                <h3 className="text-3xl font-bold font-heading">₹{totalRevenue.toLocaleString()}</h3>
+                <span className="text-xs font-semibold text-gray-500 flex items-center bg-gray-500/10 px-2 py-0.5 rounded-full">Real-time</span>
               </div>
             </div>
           </div>
