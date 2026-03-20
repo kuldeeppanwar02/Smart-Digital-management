@@ -72,8 +72,11 @@ const Layout = ({ children }) => {
 
   const filteredMenuItems = menuItems.filter(item => {
     if (user.role === 'superadmin' || user.role === 'principal') return true;
-    // If it's a teacher, student, parent, they get their own menus anyway, the filter applies mostly to 'school_admin'
-    if (user.role !== 'school_admin') return true; 
+    
+    // For non-admin roles, all their tools are in horizontal tabs, so they only need 'Dashboard' in the global nav
+    if (user.role === 'teacher' || user.role === 'student' || user.role === 'parent') {
+      return item.id === 'dashboard';
+    }
 
     // If a school_admin has no specific sub-permissions set, they assume full admin access.
     if (!user.permissions || user.permissions.length === 0) return true;
