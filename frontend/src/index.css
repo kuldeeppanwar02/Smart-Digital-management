@@ -1,24 +1,61 @@
 @import "tailwindcss";
 
 @layer base {
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap');
 
+  html {
+    color-scheme: dark;
+  }
+  
   body {
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #121212;
+    color: #e5e5e5;
     margin: 0;
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
   }
 }
 
 @layer utilities {
   .glass-panel {
-    @apply bg-white/70 backdrop-blur-lg border border-white/50 shadow-xl shadow-indigo-900/5;
+    @apply bg-neutral-900/40 backdrop-blur-xl border border-white/5 shadow-2xl;
   }
   
+  .glass-card {
+    @apply bg-[#1E1E1E]/80 backdrop-blur-lg border border-white/5 shadow-xl transition-all duration-300 hover:shadow-2xl hover:border-white/10;
+  }
+
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r;
   }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+}
+
+/* Base tailwind v4 theme variables */
+@theme {
+  --color-primary: #0A84FF;
+  --color-primary-dim: #0056b3;
+  --color-success: #34C759;
+  --color-success-dim: #2aa348;
+  --color-danger: #FF3B30;
+  --color-warning: #FF9500;
+  --color-surface: #1E1E1E;
+  --color-surface-hover: #2A2A2A;
+  --color-background: #121212;
+  
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Poppins', system-ui, sans-serif;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

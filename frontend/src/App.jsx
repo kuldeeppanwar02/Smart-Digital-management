@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
@@ -15,13 +16,13 @@ const PrivateRoute = ({ children, allowedRoles }) => {
   if (!token) return <Navigate to="/" />;
   if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/" />;
 
-  return children;
+  return <Layout>{children}</Layout>;
 };
 
 const App = () => {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-50 text-gray-900">
+      <div className="font-sans antialiased text-[#e5e5e5] bg-[#121212] min-h-screen">
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<SchoolRegistration />} />

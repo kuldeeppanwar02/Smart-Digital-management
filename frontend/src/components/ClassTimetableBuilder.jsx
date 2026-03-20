@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import { Calendar as CalendarIcon, Clock, Edit2, AlertCircle, Trash2, ShieldAlert } from 'lucide-react';
 
 export default function ClassTimetableBuilder({ classTeacherOf }) {
   const [timetable, setTimetable] = useState([]);
@@ -130,52 +131,56 @@ export default function ClassTimetableBuilder({ classTeacherOf }) {
     } catch (err) { alert('Error setting holiday'); }
   };
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading your class schedule...</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500 animate-pulse">Loading your class schedule...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 md:p-8 text-white shadow-lg shadow-indigo-500/20">
-        <div className="flex justify-between items-center">
+    <div className="space-y-6 animate-fade-in w-full">
+      <div className="glass-card rounded-2xl p-6 md:p-8 text-white relative overflow-hidden">
+        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] bg-[#0A84FF]/20 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+        <div className="flex justify-between items-center z-10 relative">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">Class {className}-{section} Timetable</h2>
-            <p className="text-indigo-100 max-w-xl text-sm md:text-base">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 font-heading flex items-center gap-3">
+              <CalendarIcon className="text-[#0A84FF] w-8 h-8" />
+              Class {className}-{section} Timetable
+            </h2>
+            <p className="text-gray-400 max-w-xl text-sm md:text-base">
               As the designated Class Teacher, you can configure the Master Weekly Timetable below. Entering a subject automatically assigns the authorized teacher.
             </p>
-          </div>
-          <div className="hidden md:flex h-16 w-16 bg-white/20 rounded-2xl items-center justify-center backdrop-blur-sm border border-white/30">
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="flex gap-2 bg-gray-100/50 p-1.5 rounded-xl">
+      <div className="glass-card rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="flex gap-2 bg-[#121212]/50 p-1.5 rounded-xl border border-white/5">
            <button 
              onClick={() => setEditMode('base')}
-             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${editMode === 'base' ? 'bg-white text-indigo-700 shadow-sm border border-gray-200' : 'text-gray-500 hover:bg-gray-200/50'}`}
+             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${editMode === 'base' ? 'bg-[#0A84FF]/10 text-[#0A84FF] border border-[#0A84FF]/20 shadow-[0_0_15px_rgba(10,132,255,0.15)]' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
            >
+             <Clock className="w-4 h-4" />
              Master Weekly Template
            </button>
            <button 
              onClick={() => setEditMode('exception')}
-             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${editMode === 'exception' ? 'bg-white text-rose-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:bg-gray-200/50'}`}
+             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${editMode === 'exception' ? 'bg-[#FF3B30]/10 text-[#FF3B30] border border-[#FF3B30]/20 shadow-[0_0_15px_rgba(255,59,48,0.15)]' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
            >
+             <AlertCircle className="w-4 h-4" />
              Specific Date Override
            </button>
         </div>
 
         {editMode === 'exception' && (
           <div className="flex items-center gap-4">
-             <input 
-               type="date" 
-               value={selectedDate}
-               onChange={(e) => setSelectedDate(e.target.value)}
-               className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-             />
+             <div className="relative">
+               <input 
+                 type="date" 
+                 value={selectedDate}
+                 onChange={(e) => setSelectedDate(e.target.value)}
+                 className="bg-[#121212] border border-white/10 px-4 py-2 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-[#FF3B30]/50 transition-all [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert"
+               />
+             </div>
              {activeDaysList.length > 0 && (
-               <button onClick={() => markDayAsHoliday(activeDaysList[0])} className="bg-rose-50 text-rose-600 border border-rose-200 px-4 py-2 rounded-xl text-xs font-bold hover:bg-rose-100 transition-colors">
+               <button onClick={() => markDayAsHoliday(activeDaysList[0])} className="bg-[#FF3B30]/10 text-[#FF3B30] border border-[#FF3B30]/20 px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#FF3B30]/20 transition-colors flex items-center gap-1">
+                 <ShieldAlert className="w-4 h-4" />
                  Mark as Holiday
                </button>
              )}
@@ -184,37 +189,37 @@ export default function ClassTimetableBuilder({ classTeacherOf }) {
       </div>
 
       {timetable[0]?.isHoliday ? (
-        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-12 text-center">
-           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-rose-100">
+        <div className="bg-[#FF3B30]/5 border border-[#FF3B30]/20 rounded-2xl p-12 text-center backdrop-blur-md">
+           <div className="w-16 h-16 bg-[#121212] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#FF3B30]/20 shadow-[0_0_20px_rgba(255,59,48,0.2)]">
              <span className="text-2xl">🏖️</span>
            </div>
-           <h3 className="text-xl font-bold text-rose-800 mb-2">School Holiday Declared</h3>
-           <p className="text-rose-600/80">You marked {selectedDate} as a complete holiday. All standard classes are suppressed for your section on this date.</p>
-           <button onClick={() => deletePeriod(activeDaysList[0], 0)} className="mt-4 text-xs font-bold text-gray-400 hover:text-gray-600 underline">Remove Holiday Marker</button>
+           <h3 className="text-xl font-bold text-[#FF3B30] mb-2 font-heading">School Holiday Declared</h3>
+           <p className="text-[#FF3B30]/70">You marked {selectedDate} as a complete holiday. All standard classes are suppressed for your section on this date.</p>
+           <button onClick={() => deletePeriod(activeDaysList[0], 0)} className="mt-4 text-xs font-bold text-gray-500 hover:text-[#FF3B30] underline transition-colors">Remove Holiday Marker</button>
         </div>
       ) : activeDaysList.length === 0 ? (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-12 text-center text-amber-800 font-bold">
+        <div className="bg-[#FF9500]/5 border border-[#FF9500]/20 rounded-2xl p-12 text-center text-[#FF9500] font-bold backdrop-blur-md">
            Sundays are not available for scheduling.
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+        <div className="glass-card rounded-2xl overflow-x-auto border border-white/5">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr className="bg-gray-50/80 border-b border-gray-100">
-                <th className="p-4 font-bold text-gray-700 w-32 border-r border-gray-50 text-center">Day</th>
+              <tr className="bg-white/5 border-b border-white/10">
+                <th className="p-4 font-bold text-gray-400 w-32 border-r border-white/5 text-center">Day</th>
                 {periods.map(p => (
-                  <th key={p} className="p-4 font-bold text-gray-500 text-xs uppercase tracking-wider text-center border-r border-gray-50 min-w-[140px]">
+                  <th key={p} className="p-4 font-bold text-gray-500 text-xs uppercase tracking-wider text-center border-r border-white/5 min-w-[140px]">
                     Period {p}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-white/5">
               {activeDaysList.map(day => (
-                <tr key={day} className="hover:bg-gray-50/30 transition-colors">
-                  <td className="p-4 font-bold text-gray-800 border-r border-gray-50 bg-gray-50/10 text-center relative">
+                <tr key={day} className="hover:bg-white/5 transition-colors">
+                  <td className="p-4 font-bold text-white border-r border-white/5 bg-[#121212]/50 text-center relative">
                     {day}
-                    {editMode === 'exception' && <span className="block mt-1 text-[10px] text-rose-500 font-bold">{selectedDate}</span>}
+                    {editMode === 'exception' && <span className="block mt-1 text-[10px] text-[#FF3B30] font-bold bg-[#FF3B30]/10 py-0.5 rounded px-1 w-max mx-auto">{selectedDate}</span>}
                   </td>
                   {periods.map(p => {
                     // Look up the specific element inside periodInfo directly from DB array schema format
@@ -222,43 +227,46 @@ export default function ClassTimetableBuilder({ classTeacherOf }) {
                     const entry = dayDoc?.periodInfo?.find(info => info.periodNumber === p) || {};
                     
                     return (
-                      <td key={`${day}-${p}`} className="p-2 border-r border-gray-50 relative group h-24">
+                      <td key={`${day}-${p}`} className="p-2 border-r border-white/5 relative group h-28">
                         {entry.subject && entry.subject !== 'Free Period' ? (
-                          <div className={`${entry.subject === 'Cancelled' ? 'bg-rose-50 border-rose-200' : 'bg-indigo-50 border-indigo-100'} border rounded-xl p-3 h-full flex flex-col justify-center relative hover:shadow-sm transition-all`}>
+                          <div className={`${entry.subject === 'Cancelled' ? 'bg-[#FF3B30]/10 border-[#FF3B30]/20 shadow-[0_0_10px_rgba(255,59,48,0.1)]' : 'bg-[#0A84FF]/10 border-[#0A84FF]/20 shadow-[0_0_10px_rgba(10,132,255,0.05)]'} border rounded-xl p-3 h-full flex flex-col justify-center relative hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300`}>
                             <button 
                               onClick={() => deletePeriod(day, p)}
-                              className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200 z-10"
+                              className="absolute -top-2 -right-2 bg-[#121212] text-[#FF3B30] border border-[#FF3B30]/30 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#FF3B30] hover:text-white z-10"
                               title="Clear Period"
                             >
-                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                              <Trash2 className="w-3 h-3" />
                             </button>
-                            <span className={`font-bold text-sm block truncate ${entry.subject === 'Cancelled' ? 'text-rose-700 line-through' : 'text-indigo-900'}`} title={entry.subject}>{entry.subject}</span>
-                            <span className={`text-xs font-medium block truncate mt-0.5 ${entry.subject === 'Cancelled' ? 'text-rose-500/70' : 'text-indigo-600'}`} title={entry.teacher?.name || 'Self'}>
+                            <span className={`font-bold text-sm block truncate ${entry.subject === 'Cancelled' ? 'text-[#FF3B30] line-through' : 'text-[#0A84FF]'}`} title={entry.subject}>{entry.subject}</span>
+                            <span className={`text-xs font-medium block truncate mt-1 flex items-center gap-1 ${entry.subject === 'Cancelled' ? 'text-[#FF3B30]/70' : 'text-gray-300'}`} title={entry.teacher?.name || 'Self'}>
                               {entry.subject === 'Cancelled' ? 'Class Dismissed' : entry.teacher?.name || 'Self'}
                             </span>
-                            {entry.room && <span className="text-[10px] text-gray-400 mt-1 block">Room {entry.room}</span>}
+                            {entry.room && <span className="text-[10px] text-gray-500 mt-1 block px-2 py-0.5 bg-[#121212] rounded w-max border border-white/5">Room {entry.room}</span>}
                           </div>
                         ) : (
-                          <div className="h-full min-h-[80px] flex flex-col items-center justify-center p-2 opacity-50 hover:opacity-100 transition-opacity bg-white">
+                          <div className="h-full min-h-[90px] flex flex-col items-center justify-center p-2 opacity-30 hover:opacity-100 transition-opacity bg-transparent rounded-xl border border-dashed border-white/10 group-hover:bg-white/5">
                               {editMode === 'exception' ? (
                                  <button
                                    onClick={() => handlePeriodUpdate(day, p, 'Cancelled', '')}
-                                   className="text-[10px] font-bold text-rose-500 bg-rose-50 border border-rose-100 px-2 py-1 rounded w-full mb-2 hover:bg-rose-100"
+                                   className="text-[10px] font-bold text-[#FF3B30] bg-[#FF3B30]/10 border border-[#FF3B30]/20 px-2 py-1 rounded w-full mb-2 hover:bg-[#FF3B30]/20 transition-colors"
                                  >
                                    Mark Cancelled
                                  </button>
                               ) : null}
-                              <input 
-                                type="text" 
-                                placeholder="+ Subject" 
-                                className="w-full text-xs text-center border-b border-gray-200 bg-transparent focus:outline-none focus:border-indigo-500 pb-1 mb-1 placeholder-gray-400"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    handlePeriodUpdate(day, p, e.target.value, '');
-                                    e.target.value = '';
-                                  }
-                                }}
-                              />
+                              <div className="relative w-full">
+                                <Edit2 className="w-3 h-3 text-gray-500 absolute left-2 top-1/2 -translate-y-1/2" />
+                                <input 
+                                  type="text" 
+                                  placeholder="Add Subject" 
+                                  className="w-full text-xs text-center border-b border-white/10 bg-[#121212]/50 rounded px-6 py-1.5 focus:outline-none focus:border-[#0A84FF]/50 focus:bg-[#121212] text-white placeholder-gray-600 transition-all font-medium"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      handlePeriodUpdate(day, p, e.target.value, '');
+                                      e.target.value = '';
+                                    }
+                                  }}
+                                />
+                              </div>
                           </div>
                         )}
                       </td>
@@ -270,9 +278,10 @@ export default function ClassTimetableBuilder({ classTeacherOf }) {
           </table>
         </div>
       )}
-      <p className="text-xs text-center text-gray-400 mt-4">
+      <p className="text-xs text-center text-gray-500 mt-4 flex items-center justify-center gap-2">
+        <AlertCircle className="w-4 h-4 text-gray-400" />
         {editMode === 'base' ? 
-          `Tip: The system automatically searches for a teacher assigned to ${className}-${section} who teaches the subject you enter and locks them in.` : 
+          `Tip: The system automatically searches for a teacher assigned to Class ${className}-${section} who teaches the subject you enter and locks them in.` : 
           `Override Mode: Any changes made here ONLY affect ${selectedDate}. It overrides the master template for student planners.`
         }
       </p>
