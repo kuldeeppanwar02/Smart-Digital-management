@@ -11,7 +11,8 @@ import {
   School,
   Wallet,
   Bell,
-  Search
+  Search,
+  Plus
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -155,7 +156,7 @@ const Layout = ({ children }) => {
         </header>
 
         {/* Scrollable Page Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#121212] p-6 lg:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#121212] p-6 lg:p-8 pb-32 md:pb-8">
           <div className="max-w-7xl mx-auto animate-fade-in relative z-0">
             {/* Background ambient glow effect */}
             <div className="absolute top-[-20%] left-[-10%] w-[40%] h-[40%] bg-[#0A84FF] rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
@@ -164,6 +165,37 @@ const Layout = ({ children }) => {
             {children}
           </div>
         </main>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1E1E1E]/95 backdrop-blur-xl border-t border-white/10 z-50 px-6 py-3 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+          <div className="flex justify-between items-center relative">
+            <NavLink to={basePath} end onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
+              <LayoutDashboard className="w-6 h-6" />
+              <span className="text-[10px] font-semibold tracking-wide">Dash</span>
+            </NavLink>
+            <NavLink to={`${basePath}/users`} onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
+              <Users className="w-6 h-6" />
+              <span className="text-[10px] font-semibold tracking-wide">Students</span>
+            </NavLink>
+            
+            {/* Center FAB */}
+            <div className="relative -top-7">
+              <button className="w-14 h-14 bg-[#0A84FF] rounded-full flex items-center justify-center shadow-[0_8px_25px_rgba(10,132,255,0.4)] text-white hover:scale-110 active:scale-95 transition-all outline outline-8 outline-[#121212]">
+                <Plus className="w-8 h-8" />
+              </button>
+            </div>
+
+            <NavLink to={`${basePath}/tracking`} onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
+              <Map className="w-6 h-6" />
+              <span className="text-[10px] font-semibold tracking-wide">Bus</span>
+            </NavLink>
+            <NavLink to={`${basePath}/settings`} onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
+              <Settings className="w-6 h-6" />
+              <span className="text-[10px] font-semibold tracking-wide">Settings</span>
+            </NavLink>
+          </div>
+        </div>
+
       </div>
     </div>
   );
