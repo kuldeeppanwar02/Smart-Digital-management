@@ -181,78 +181,35 @@ export default function TeacherDashboard() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-gray-50/50 font-sans text-gray-800">
-      {/* Sidebar */}
-      <div className="w-full md:w-72 bg-white border-r border-gray-100 flex flex-col shadow-sm z-10">
-        <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-          <div className="h-10 w-10 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/20">
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 leading-tight">Teacher Portal</h2>
-            <p className="text-xs font-medium text-indigo-600 uppercase tracking-wider">Workspace</p>
-          </div>
+    <div className="min-h-screen bg-gray-50/50 font-sans text-gray-800 w-full animate-fade-in">
+      <main className="p-4 lg:p-8 w-full mx-auto max-w-7xl">
+        <div className="flex overflow-x-auto no-scrollbar bg-white rounded-2xl shadow-sm border border-gray-100 p-2 mb-8 gap-2 items-center">
+          {['attendance', 'timetable', 'exams', 'marks', 'query'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl capitalize font-bold transition-all whitespace-nowrap ${
+                activeTab === tab
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-gray-500 hover:bg-gray-100'
+              }`}
+            >
+              {tab === 'query' ? 'Help / Query' : tab}
+            </button>
+          ))}
+          {user.classTeacherOf && (
+            <button
+              onClick={() => setActiveTab('manage_class_timetable')}
+               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl capitalize font-bold transition-all whitespace-nowrap md:ml-auto ${
+                activeTab === 'manage_class_timetable'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+              }`}
+            >
+              Manage Class Timetable
+            </button>
+          )}
         </div>
-        
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
-          <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-2">Modules</p>
-          <nav className="space-y-1">
-            {['attendance', 'timetable', 'exams', 'marks', 'query'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl capitalize font-medium transition-all duration-200 ${
-                  activeTab === tab 
-                    ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-transparent'
-                }`}
-              >
-                {tab === 'attendance' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                {tab === 'timetable' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                {tab === 'exams' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
-                {tab === 'marks' && <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>}
-                {tab === 'query' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                {tab === 'query' ? 'Help / Query' : tab}
-              </button>
-            ))}
-
-            {/* Special Class Teacher Tab */}
-            {user.classTeacherOf && (
-              <button
-                onClick={() => setActiveTab('manage_class_timetable')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl capitalize font-medium transition-all duration-200 mt-4 border-t border-indigo-100 ${
-                  activeTab === 'manage_class_timetable' 
-                    ? 'bg-purple-50 text-purple-700 shadow-sm border-purple-200' 
-                    : 'text-indigo-600 hover:bg-indigo-50 border-transparent'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                Manage Class Timetable
-              </button>
-            )}
-          </nav>
-        </div>
-        
-        <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-          <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold border border-indigo-200">
-              {user.name?.charAt(0) || 'T'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-              <p className="text-xs text-gray-500 truncate">{user.email}</p>
-            </div>
-          </div>
-          <button onClick={logout} className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 py-2.5 rounded-xl hover:bg-gray-50 hover:text-red-600 transition-colors text-sm font-medium shadow-sm">
-            Sign out
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 capitalize tracking-tight">
             {activeTab === 'manage_class_timetable' ? 'Manage Master Class Timetable' : `${activeTab} Management`}

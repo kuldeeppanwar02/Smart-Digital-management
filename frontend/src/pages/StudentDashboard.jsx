@@ -97,72 +97,23 @@ export default function StudentDashboard() {
   const filteredAttendance = getFilteredAttendance();
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-gray-50/50 font-sans text-gray-800">
-      {/* Sidebar */}
-      <div className="w-full md:w-72 bg-white border-r border-gray-100 flex flex-col shadow-sm z-10">
-        <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-           <div className="h-10 w-10 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20">
-             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-               <path d="M12 14l9-5-9-5-9 5 9 5z" />
-               <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
-             </svg>
-           </div>
-           <div>
-             <h2 className="text-lg font-bold text-gray-900 leading-tight">Student Portal</h2>
-             <p className="text-xs font-medium text-blue-600 tracking-wider">Class: {user.className}</p>
-           </div>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
-          <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-2">Navigation</p>
-          <nav className="space-y-1">
+    <div className="min-h-screen bg-gray-50/50 font-sans text-gray-800 w-full animate-fade-in">
+      <main className="p-4 lg:p-8 w-full mx-auto max-w-7xl">
+        <div className="flex overflow-x-auto no-scrollbar bg-white rounded-2xl shadow-sm border border-gray-100 p-2 mb-8 gap-2 items-center">
             {['attendance', 'timetable', 'exams', 'marks', 'fees', 'query'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl capitalize font-medium transition-all duration-200 ${
-                  activeTab === tab 
-                    ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-100/50' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-transparent'
+                 className={`flex items-center gap-2 px-6 py-2.5 rounded-xl capitalize font-bold transition-all whitespace-nowrap ${
+                  activeTab === tab
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-gray-500 hover:bg-gray-100'
                 }`}
               >
-                {tab === 'attendance' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
-                {tab === 'timetable' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                {tab === 'exams' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
-                {tab === 'marks' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
-                {tab === 'fees' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                {tab === 'query' && <svg className={`w-5 h-5 ${activeTab === tab ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                 {tab === 'query' ? 'Help / Query' : tab}
               </button>
             ))}
-          </nav>
         </div>
-        
-        <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-          <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200">
-              {user.name?.charAt(0) || 'S'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-              <p className="text-xs text-gray-500 truncate">{user.rollNumber}</p>
-            </div>
-          </div>
-          <button 
-            onClick={logout} 
-            className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 py-2.5 rounded-xl hover:bg-gray-50 hover:text-red-600 hover:border-red-200 transition-colors duration-200 text-sm font-medium shadow-sm"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Sign out
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 capitalize tracking-tight">
             {activeTab === 'query' ? 'Help / Query' : activeTab}
