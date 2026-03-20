@@ -178,12 +178,10 @@ const Layout = ({ children }) => {
               <span className="text-[10px] font-semibold tracking-wide">Students</span>
             </NavLink>
             
-            {/* Center FAB */}
-            <div className="relative -top-7">
-              <button className="w-14 h-14 bg-[#0A84FF] rounded-full flex items-center justify-center shadow-[0_8px_25px_rgba(10,132,255,0.4)] text-white hover:scale-110 active:scale-95 transition-all outline outline-8 outline-[#121212]">
-                <Plus className="w-8 h-8" />
-              </button>
-            </div>
+            <NavLink to={`${basePath}/timetable`} onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
+              <CalendarDays className="w-6 h-6" />
+              <span className="text-[10px] font-semibold tracking-wide">Timetable</span>
+            </NavLink>
 
             <NavLink to={`${basePath}/tracking`} onClick={handleNavClick} className={({isActive}) => `flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-[#0A84FF]' : 'text-gray-400 hover:text-white'}`}>
               <Map className="w-6 h-6" />
