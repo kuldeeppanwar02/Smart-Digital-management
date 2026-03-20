@@ -11,4 +11,11 @@ router.get(
   analyticsController.getAdminAnalytics
 );
 
+// Endpoint for Student Risk & AI Recommendations
+router.get(
+  '/student-risk/:id',
+  authMiddleware,
+  analyticsController.getStudentRiskProfile
+);
+
 module.exports = router;

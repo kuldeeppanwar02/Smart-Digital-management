@@ -4,9 +4,10 @@ import api from '../api';
 import StudentFees from '../components/StudentFees';
 import StudentTimetable from '../components/StudentTimetable';
 import ReportCardPDF from '../components/ReportCardPDF';
+import StudentInsights from '../components/StudentInsights';
 
 export default function StudentDashboard() {
-  const [activeTab, setActiveTab] = useState('attendance');
+  const [activeTab, setActiveTab] = useState('insights');
   const [attendance, setAttendance] = useState({ records: [], summary: {} });
   const [attendanceFilter, setAttendanceFilter] = useState('Total');
   const [queryForm, setQueryForm] = useState({ subject: '', message: '' });
@@ -100,7 +101,7 @@ export default function StudentDashboard() {
     <div className="min-h-screen bg-gray-50/50 font-sans text-gray-800 w-full animate-fade-in">
       <main className="p-4 lg:p-8 w-full mx-auto max-w-7xl">
         <div className="flex overflow-x-auto no-scrollbar bg-white rounded-2xl shadow-sm border border-gray-100 p-2 mb-8 gap-2 items-center">
-            {['attendance', 'timetable', 'exams', 'marks', 'fees', 'query'].map((tab) => (
+            {['insights', 'attendance', 'timetable', 'exams', 'marks', 'fees', 'query'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -110,21 +111,24 @@ export default function StudentDashboard() {
                     : 'text-gray-500 hover:bg-gray-100'
                 }`}
               >
-                {tab === 'query' ? 'Help / Query' : tab}
+                {tab === 'query' ? 'Help / Query' : (tab === 'insights' ? 'AI Insights' : tab)}
               </button>
             ))}
         </div>
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 capitalize tracking-tight">
-            {activeTab === 'query' ? 'Help / Query' : activeTab}
+            {activeTab === 'query' ? 'Help / Query' : (activeTab === 'insights' ? 'AI Insights' : activeTab)}
           </h1>
           <p className="text-gray-500 mt-1">
+            {activeTab === 'insights' && "Review your AI-generated risk profile and performance recommendations."}
             {activeTab === 'attendance' && "Track your presence and maintain your attendance required percentage."}
             {activeTab === 'query' && "Ask your class teacher for assistance, guidance, or raise a concern."}
             {activeTab === 'fees' && "View your fee summary, outstanding dues, and receipts."}
-            {activeTab !== 'attendance' && activeTab !== 'query' && activeTab !== 'fees' && "View your academic records and information."}
+            {activeTab !== 'insights' && activeTab !== 'attendance' && activeTab !== 'query' && activeTab !== 'fees' && "View your academic records and information."}
           </p>
         </header>
+
+        {activeTab === 'insights' && <StudentInsights studentId={user._id} />}
 
         {activeTab === 'fees' && <StudentFees />}
         {activeTab === 'timetable' && <StudentTimetable classLevel={user.className} section={user.section} />}
